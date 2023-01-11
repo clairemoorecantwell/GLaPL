@@ -50,6 +50,35 @@
 
 \section{Quick Start}
 
+To begin using GLaPL, you will need:
+\begin{itemize}
+\item A python terminal
+\item \texttt{learner.py}
+\item \texttt{config.gl}
+\item \texttt{features.txt}
+\item an input file
+\end{itemize}
+
+Put all of these files in the same folder on your computer, and point your python terminal to that folder.  Then, run the following commands:
+
+	\begin{minted}[linenos,autogobble,bgcolor=lightgray]{python}
+		import learner as l
+		g = l.Grammar()
+	\end{minted}
+
+You should see output confirming that your file was read in, and listing your constraints and starting weights (generally all zeros).  If you see this, you are ready to run \pythoninline{g.learn()}.  This function takes two numbers as input.  The first is the number of learning iterations per epoch, and the second is the number of epochs.  So, if I use 100 for both parameters, I'll learn a total of 10,000 (100*100) times.  After each epoch, you'll get an error rate printed to the command line, and various information printed to output files.  Try it:
+
+	\begin{minted}[linenos,autogobble,bgcolor=lightgray]{python}
+		g.learn(100,100)
+	\end{minted}
+	
+If you want the learner to save information often during learning, increase the number of epochs and decrease the number of iterations per epoch, perhaps like \pythoninline{g.learn(10,1000)} or even \pythoninline{g.learn(1,10000)}.  If you want the learner to run, faster decrease the number of epochs and increase the number of iterations: \pythoninline{g.learn(1000,10)} or \pythoninline{g.learn(10000,1)}.
+
+After learning, you will see several output files appear in the folder your python terminal is pointed to.
+
+\texttt{output.txt}
+
+
 \section{Details of Theories Implemented}
 	\subsection{Preliminaries}
 		\subsubsection{Theories of \textsc{Eval}}
