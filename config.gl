@@ -3,7 +3,8 @@
 #trainingData: lexCinput
 #trainingData: useListed_input
 #trainingData: type_token_inpt
-trainingData: manual/manual_examples/freqMatchingInput.txt
+#trainingData: manual/manual_examples/freqMatchingInput.txt
+trainingData: dutchinput
 
 # starting weights: numbers, separated by commas.
 # Use a single 0 to initialize all weights at 0
