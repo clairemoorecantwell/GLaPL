@@ -321,7 +321,7 @@ class Tableau:
             lexemeOrderList = []
             for i in range(0,len(allIndices)):
                 lex =allLexemes[allIndices.index(i)]
-                lexemeOrderList += [", ".join([l.tag for l in lex])]
+                lexemeOrderList += ["_".join([l.tag for l in lex])]
             #print(lexemeOrderList)
             urs = lexemeOrderList
         else:

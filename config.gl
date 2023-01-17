@@ -1,9 +1,4 @@
 # training data filename
-#trainingData: cshaped_syncope
-#trainingData: lexCinput
-#trainingData: useListed_input
-#trainingData: type_token_inpt
-#trainingData: manual/manual_examples/freqMatchingInput.txt
 trainingData: dutchinput
 
 # starting weights: numbers, separated by commas.
@@ -69,15 +64,15 @@ pToList: 0.2
 ################
 # Parameters for Lexical Indexation
 # Number of copies allowed of each constraint (use string "inf" to allow a maximum of one copy per lexical item)
-nLexCs: 0
+nLexCs: 7
 # Probability of changing a lexical item's indexation on error (rather than updating the weight of the indexed C)
 pChangeIndexation: 0.8
 # Lexical constraint start weight
 lexCStartW: 5
 # Locality restriction type
-locality: overlap
-# locality: strict
-#locality: presence_only
+# locality: overlap
+ locality: strict
+# locality: presence_only
 
 
 

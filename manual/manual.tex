@@ -18,7 +18,7 @@
 	dummy/.style    = {circle,draw}
 }
 
-
+\usepackage{python}
 
 \usepackage{xcolor,rotating,multirow} % for whatever reason, need to call xcolor before minted
 
@@ -66,15 +66,29 @@ Put all of these files in the same folder on your computer, and point your pytho
 		g = l.Grammar()
 	\end{minted}
 
-You should see output confirming that your file was read in, and listing your constraints and starting weights (generally all zeros).  If you see this, you are ready to run \pythoninline{g.learn()}.  This function takes two numbers as input.  The first is the number of learning iterations per epoch, and the second is the number of epochs.  So, if I use 100 for both parameters, I'll learn a total of 10,000 (100*100) times.  After each epoch, you'll get an error rate printed to the command line, and various information printed to output files.  Try it:
+You should see output confirming that your file was read in, and listing your constraints and starting weights (generally all zeros).  
+
+\includegraphics[width=0.9\textwidth]{embeddedImages/grammarCreationOutput.pdf}
+
+If you see this, you are ready to run \pythoninline{g.learn()}.  This function takes two numbers as input.  The first is the number of learning iterations per epoch, and the second is the number of epochs.  So, if I use 100 for both parameters, I'll learn a total of 10,000 (100*100) times.  After each epoch, you'll get an error rate printed to the command line, and various information printed to output files.  Try it:
 
 	\begin{minted}[linenos,autogobble,bgcolor=lightgray]{python}
 		g.learn(100,100)
 	\end{minted}
+
+
 	
 If you want the learner to save information often during learning, increase the number of epochs and decrease the number of iterations per epoch, perhaps like \pythoninline{g.learn(10,1000)} or even \pythoninline{g.learn(1,10000)}.  If you want the learner to run, faster decrease the number of epochs and increase the number of iterations: \pythoninline{g.learn(1000,10)} or \pythoninline{g.learn(10000,1)}.
 
-After learning, you will see several output files appear in the folder your python terminal is pointed to.
+As learning progresses, you will see a printout at each Epoch of an error rate.  When learning is finished you will see the final constraint weights
+
+\includegraphics[width=0.6\textwidth]{embeddedImages/epochPrintout.png}
+
+After learning, you will see at least one output file appear in the folder your python terminal is pointed to.
+
+\begin{itemize}
+	\item \texttt{output.txt} - This is a plain text file, which contains predicted tableaux for every datum in your input file.  You should copy-paste it into Excel or another spreadsheet program to read it easily.
+\end{itemize}
 
 \texttt{output.txt}
 

@@ -1,4 +1,4 @@
-input	candidate	obs.prob	tab.prob	Id-Length	STW	*VVC	Id-length_listed
+input	candidate	obs.prob	tab.prob	Id-Length	STW	*VVC	Id-Length_listed
 klas	klas	1	1	0	1	0	0
 klas	klaas	0	1	1	0	1	1
 klas_en	klas_en	1	1	0	1	0	0
