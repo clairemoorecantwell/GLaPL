@@ -1283,15 +1283,8 @@ class Grammar:
         #print("PFCs_w")
         #print(PFCs_w)
 
-        # saving all tableau to output file
-        print("predicting")
-        obs, pred = self.predictAll()
-        results = [t.toFile() for t in pred]
-        #print(results)
-        with open("output.txt", 'w') as f:
-            f.write('\n'.join(results))
-        print("Saving output predictions to "+Fore.CYAN+"output.txt")
-
+        self.predict()
+        
         with open("weights.txt", "w") as f:
             #print(grammar_constraints_w)
             out = ""
@@ -1322,6 +1315,16 @@ class Grammar:
 
 
                 f.write(out)
+
+    def predict(self):
+        # saving all tableau to output file
+        print("predicting")
+        obs, pred = self.predictAll()
+        results = [t.toFile() for t in pred]
+        #print(results)
+        with open("output.txt", 'w') as f:
+            f.write('\n'.join(results))
+        print("Saving output predictions to "+Fore.CYAN+"output.txt"+Style.RESET_ALL)
 
 
     def makeTableau(self,datum,rich=False,testFcs=False):
