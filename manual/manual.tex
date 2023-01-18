@@ -28,7 +28,7 @@
 \usepackage{gb4e}
 
 \usepackage[round]{natbib}
-\usepackage{tipa,setspace}
+\usepackage{tipa,setspace,hyperref}
 
 
 
@@ -54,7 +54,7 @@ To begin using GLaPL, you will need:
 \begin{itemize}
 \item A python terminal
 \item \texttt{learner.py}
-\item \texttt{config.gl}
+\item \texttt{config.gl} (more in \ref{configInstructions})
 \item \texttt{features.txt}
 \item an input file
 \end{itemize}
@@ -84,13 +84,49 @@ As learning progresses, you will see a printout at each Epoch of an error rate. 
 
 \includegraphics[width=0.6\textwidth]{embeddedImages/epochPrintout.png}
 
-After learning, you will see at least one output file appear in the folder your python terminal is pointed to.
+If you want to examine either the Sum Squared Error (SSE) or log likelihood of your learned grammar's predictions, you can run:
+
+\begin{minted}[linenos,autogobble,bgcolor=lightgray]{python}
+	g.SSE()
+	g.logLikelihood()
+\end{minted}
+
+After learning, you will see output files appear in the folder your python terminal is pointed to.
 
 \begin{itemize}
 	\item \texttt{output.txt} - This is a plain text file, which contains predicted tableaux for every datum in your input file.  You should copy-paste it into Excel or another spreadsheet program to read it easily.
+	\item[] It should look something like this:
+
+\includegraphics[width=0.9\textwidth]{embeddedImages/outputFile.png}
+
+	\item[] \texttt{output.txt} contains one tableau for each input in your input file.
+	\begin{itemize}
+		\item[] {\bf IMPORTANT} These may not be the only options for generating each input's tableau!  To re-generate predictions, run
+	\end{itemize}
+
+\begin{minted}[linenos,autogobble,bgcolor=lightgray]{python}
+	g.predict()
+\end{minted}
+
+
+	\item[] More details:
+	
+\includegraphics[width=0.9\textwidth]{embeddedImages/outputFile\_markedup.png}
+	\begin{itemize}
+		\item[] {\bf lexemes used} The same input and candidates can be generated from different combinations of lexemes (listed vs. composed for example).  This row tells you which lexemes were used.  It's one per cell
+		\item[] {\bf candidate predictions} Candidates will either match what you put in your input file, or be generated for you.  The next two columns are predicted probability (obs.prob) and predicted probability in this tableau (pred.prob)
+		\item[] {\bf constraint weights} The constraints and weights that were used to generate this particular tableau - they might be different across inputs, if you used lexically indexed constraints
+	\end{itemize}
+
+
+	\item \texttt{weights.txt} Each column is a constraint, each row is that constraint's weight at the end of each epoch
+	\item \texttt{lexCs.txt} Lists each clone of each constraint, and which lexical items are indexed to each clone
+	\item \texttt{listing.txt} A record of each time a new lexical item was listed.  Columns are (1) which lexemes were combined (2) the segments in the listed form (3) the learning timestep (not Epoch) at which the new lexical item was created
+	\item \texttt{PFCs.txt} (ignore for now)
+
 \end{itemize}
 
-\texttt{output.txt}
+
 
 
 \section{Details of Theories Implemented}
@@ -405,7 +441,64 @@ One last thing to note is that hidden structure can arise in a lot of different 
 
 \section{Input file details}
 
-\subsection{The \texttt{config.gl} file}
+\subsection{The input file}
+
+Your input file must have at least three columns (tab-delimited)
+
+\begin{tabular}{r|l|r|c|}
+	\cline{2-4}
+	&input & candidate & obs.prob\\
+	\cline{2-4}
+	{\it input 1} & pat & pat & 1\\
+			      & pat & pad & 0 \\
+	\cline{2-4}
+	{\it input 2} & pat\_ka & pat\_ka & 0.7 \\
+			      & pat\_ka & pad\_ka & 0 \\
+			      & pat\_ka & pad\_ga & 0.3\\
+	\cline{2-4}
+	{\it input 3} & taka & taka & 0.3 \\
+				  & taka & taga & 0.7 \\
+	\cline{2-4}
+	{\it input 4} & taka\_ka & taka\_ka & 0.3 \\
+				  & taka\_ka & taga\_ka & 0.7 \\
+	\cline{2-4}
+	{\it input 2} & pat\_ka  & pa\_ka	& 0 \\
+	\cline{2-4}
+	
+\end{tabular}
+
+\begin{itemize}
+	\item \texttt{input} One unique input for each phonological input you want the learner to experience.  Inputs may be one or more morphemes, separated by `\_'.  All rows with a particular input will be treated as the same learning datum, regardless of order
+	\item \texttt{candidate} Candidates also contain morpheme boundaries, indicated by the `\_'.  Candidates should only contain characters (other than the `\_') that match what's in your \texttt{features.txt} file, if you're using that.  If you're assigning constraint violations by function, these strings are what the functions will refer to.
+	\item \texttt{obs.prob} This column indicates how often a particular candidate appears for that input.  A simple way to use this is as above, where each input's entries all sum to 1.  You can also bake in token frequency by putting raw counts into this column.
+\end{itemize}
+
+This input file contains no constraints or violations.  If we just used this input file, we would have to assign constraint violations by function.  To include constraint violations for each candidate, simply add a column per constraint, with violations for each candidate:
+
+\begin{tabular}{r|l|r|c|c|c|c|}
+	\cline{2-4}
+	&input & candidate & obs.prob & *Voice & *VTV & Ident-Voice \\
+	\cline{2-4}
+	{\it input 1} & pat & pat & 1 & 0 & 0 & 0\\
+	& pat & pad & 0 & 1 & 0 & 1 \\
+	\cline{2-4}
+	{\it input 2} & pat\_ka & pat\_ka & 0.7 & \\
+	& pat\_ka & pad\_ka & 0 \\
+	& pat\_ka & pad\_ga & 0.3\\
+	\cline{2-4}
+	{\it input 3} & taka & taka & 0.3 \\
+	& taka & taga & 0.7 \\
+	\cline{2-4}
+	{\it input 4} & taka\_ka & taka\_ka & 0.3 \\
+	& taka\_ka & taga\_ka & 0.7 \\
+	\cline{2-4}
+	{\it input 2} & pat\_ka  & pa\_ka	& 0 \\
+	\cline{2-4}
+	
+\end{tabular}
+
+
+\subsection{The \texttt{config.gl} file}\label{configInstructions}
 
 \texttt{config.gl} is where you will set almost all the parameters for learning.  You can create multiple versions of this file to save different parameter settings, and you can name them whatever you want.  You just then need to call \pythoninline{learner.Grammar()} with the config file you want to use as an argument:
 
