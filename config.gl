@@ -1,5 +1,6 @@
 # training data filename
-trainingData: dutchinput
+# trainingData: dutchinput
+trainingData: Zimminput
 
 # starting weights: numbers, separated by commas.
 # Use a single 0 to initialize all weights at 0
@@ -9,9 +10,9 @@ weights: 0
 featureSet: features.txt
 
 # add violations
-addViolations: False
+addViolations: True
 # constraints filename
-constraints: constraints_Cshaped
+constraints: Zimmconstraints
 
 # generate candidates, using operations in the constraints module specified above
 generateCandidates: False

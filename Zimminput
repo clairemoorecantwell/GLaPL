@@ -1,0 +1,9 @@
+input	candidate	obs.prob	tab.prob	Id-back	Back-Harmony	Back-Hi-Harmony	Id-back_listed
+pan_ek	pan_ek	1	1	0	0	0	0
+pan_ek	pan_ok	0	1	1	0	0	1
+pun_ek	pun_ek	1	1	0	1	0	0
+pun_ek	pun_ok	0	1	1	0	0	1
+pon_ek	pon_ek	0	1	0	1	1	1
+pon_ek	pon_ok	1	1	1	0	0	0
+kun_ek	kun_ek	0	1	0	1	0	1
+kun_ek	kun_ok	1	1	1	0	0	0
