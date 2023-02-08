@@ -1,5 +1,5 @@
 # training data filename
-trainingData: dutchinput
+trainingData: manchuinput
 
 # starting weights: numbers, separated by commas.
 # Use a single 0 to initialize all weights at 0
@@ -9,9 +9,9 @@ weights: 0
 featureSet: features.txt
 
 # add violations
-addViolations: False
+addViolations: True
 # constraints filename
-constraints: constraints_Cshaped
+constraints: Manchu_harmony
 
 # generate candidates, using operations in the constraints module specified above
 generateCandidates: False
@@ -27,8 +27,8 @@ decayRate: 0.0001
 threshold: 1
 
 # should learning be noisy?
-#noisy: yes
-noisy: no
+noisy: yes
+#noisy: no
 
 ################
 # Parameters for UseListed
@@ -64,16 +64,19 @@ pToList: 0.2
 ################
 # Parameters for Lexical Indexation
 # Number of copies allowed of each constraint (use string "inf" to allow a maximum of one copy per lexical item)
-nLexCs: 7
+nLexCs: 5
 # Probability of changing a lexical item's indexation on error (rather than updating the weight of the indexed C)
-pChangeIndexation: 0.8
+pChangeIndexation: 1
 # Lexical constraint start weight
 lexCStartW: 5
 # Locality restriction type
-# locality: overlap
- locality: strict
+ locality: overlap
+# locality: strict
 # locality: presence_only
 
+first_index_strategy: lowest
+# highest
+# random according to number of lexemes
 
 
 
