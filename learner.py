@@ -738,18 +738,18 @@ class Grammar:
                             
                     elif param[0] == "weights":
                         weights = param[1]
-                        if float(weights) == 0:
-                            self.w = []
-                        else:
-                            weights = weights.split(",")
-
-                            try:
-                                weights = [float(w) for w in weights]
-                                self.w = weights
-                            except ValueError:
-                                print("\nWARNING: not all weight values in " + config +" could be converted to float")
-                                print("Using default weights of 0 instead"+ Style.RESET_ALL)
+                        weights = weights.split(",")
+                        try:
+                            weights = [float(w) for w in weights]
+                            if weights == [0]:
                                 self.w = []
+                            else:
+                                self.w = weights
+
+                        except ValueError:
+                            print("\nWARNING: not all weight values in " + config +" could be converted to float")
+                            print("Using default weights of 0 instead"+ Style.RESET_ALL)
+                            self.w = []
 
                     elif param[0]=="featureSet":
                         self.featuresFileName=(param[1])
