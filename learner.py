@@ -691,6 +691,9 @@ class Tableau:
 
     def getObsOutput(self):
         ''' simple function to get the observed output from the obsProbsList'''
+        if sum(self.obsProbsList)>1:
+            self.obsProbsList = [o/sum(self.obsProbsList) for o in self.obsProbsList]
+        print(self.obsProbsList)
         obsOutput = self.surfaceCands[np.random.choice(range(0, len(self.surfaceCands)), 1, p=self.obsProbsList)[0]]
         return obsOutput
 
@@ -1331,6 +1334,20 @@ class Grammar:
         ''' datum is an entry in a traningData.learnData object'''
         ''' it has the form [[lexeme1, lexeme2,...], surface string, input string]'''
         ''' 'input string' is from the input column of the spreadsheet '''
+
+        if type(datum)==int:
+            datum = self.trainingData.learnData[datum]
+        elif type(datum)==str:
+            for d in self.trainingData.learnData:
+                if d[2] == datum:  # third entry of each datum is the input string
+                    datum = d 
+                    break  # We grab the first entry that matches the input, and break out of the loop
+                           # The logic here is that all entries with the same input
+                           # will yield basically the same tableau, and we don't want to hunt longer than necessary
+                           # (esp if the trainingData is large!)
+            if type(datum)==str: # If we didn't find the string in inputs
+                print("ERROR: input " + datum + " not found in g.trainingData.learnData")
+                return
 
 
         def lexemesToFaithCands(lexemes):
