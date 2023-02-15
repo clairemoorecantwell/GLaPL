@@ -17742,7 +17742,8 @@ zEruS_nak	zEruS_nek	0
 ZibAruS_nak	ZibAruS_nak	27
 ZibAruS_nak	ZibAruS_nek	0
 ZibbadAS_nak	ZibbadAS_nak	13
-ZibbadAS_nak	ZibbadAS_nek	0
+ZibbadAS_nak	ZibbadAS_nek	0        print(self.obsProbsList)
+
 ZibongAS_nak	ZibongAS_nak	19
 ZibongAS_nak	ZibongAS_nek	0
 ZidO_nak	ZidO_nak	3830

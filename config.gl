@@ -1,6 +1,6 @@
 # training data filename
 # trainingData: dutchinput
-trainingData: hungarianInput
+trainingData: zymetInput
 
 
 # starting weights: numbers, separated by commas.
@@ -11,7 +11,7 @@ weights: 0
 featureSet: features.txt
 
 # add violations
-addViolations: True
+addViolations: False
 # constraints filename
 constraints: Hungarian_constraints
 
@@ -30,8 +30,8 @@ decayRate: 0.0001
 threshold: 1
 
 # should learning be noisy?
-noisy: yes
-#noisy: no
+#noisy: yes
+noisy: no
 
 ################
 # Parameters for UseListed

@@ -691,6 +691,8 @@ class Tableau:
 
     def getObsOutput(self):
         ''' simple function to get the observed output from the obsProbsList'''
+        print(self)
+        print(self.obsProbsList)
         if sum(self.obsProbsList)>1:
             self.obsProbsList = [o/sum(self.obsProbsList) for o in self.obsProbsList]
         print(self.obsProbsList)
