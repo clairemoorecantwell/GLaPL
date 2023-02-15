@@ -1,6 +1,10 @@
 # training data filename
+<<<<<<< HEAD
 # trainingData: dutchinput
 trainingData: hungarianInput
+=======
+trainingData: manchuinput
+>>>>>>> develop
 
 # starting weights: numbers, separated by commas.
 # Use a single 0 to initialize all weights at 0
@@ -12,7 +16,11 @@ featureSet: features.txt
 # add violations
 addViolations: True
 # constraints filename
+<<<<<<< HEAD
 constraints: Hungarian_constraints
+=======
+constraints: Manchu_harmony
+>>>>>>> develop
 
 # generate candidates, using operations in the constraints module specified above
 generateCandidates: False
@@ -65,16 +73,23 @@ pToList: 0.2
 ################
 # Parameters for Lexical Indexation
 # Number of copies allowed of each constraint (use string "inf" to allow a maximum of one copy per lexical item)
+<<<<<<< HEAD
 nLexCs: 0
+=======
+nLexCs: 5
+>>>>>>> develop
 # Probability of changing a lexical item's indexation on error (rather than updating the weight of the indexed C)
-pChangeIndexation: 0.8
+pChangeIndexation: 1
 # Lexical constraint start weight
 lexCStartW: 5
 # Locality restriction type
-# locality: overlap
- locality: strict
+ locality: overlap
+# locality: strict
 # locality: presence_only
 
+first_index_strategy: lowest
+# highest
+# random according to number of lexemes
 
 
 

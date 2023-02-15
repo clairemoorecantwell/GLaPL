@@ -269,8 +269,8 @@ class Tableau:
         form = '{:3s} ' + cform + '{:5s} ' * 3 + vform * len(self.candidates[0].violations)
         out = "Tableau " + self.tag + "\n"
         # add functionality for multi-input tableaux
-        print("lexemes:")
-        print("".join([l.tag for l in self.lexemes]))
+        #print("lexemes:")
+        #print("".join([l.tag for l in self.lexemes]))
         out += "Using lexemes "+ " ".join([l.tag for l in self.lexemes])+"\n"
         # expect constraintList to be a list of some strings and some tuples
         if self.constraintList:
@@ -283,8 +283,8 @@ class Tableau:
             if self.candidates[i - 1].c == self.winner:
                 w = " --> "
             v = self.candidates[i - 1].violations
-            row = [w] + [self.candidates[i - 1].c, self.candidates[i - 1].observedProb, self.predProbsList[i - 1],
-                         self.HList[i - 1]] + v
+            row = [w] + [self.candidates[i - 1].c, self.candidates[i - 1].observedProb, round(self.predProbsList[i - 1],2),
+                         round(self.HList[i - 1],2)] + v
             if len(row)< len(names)+5:
                 row += ['-']*((len(names)+5)-len(row))
 
@@ -740,18 +740,18 @@ class Grammar:
                             
                     elif param[0] == "weights":
                         weights = param[1]
-                        if float(weights) == 0:
-                            self.w = []
-                        else:
-                            weights = weights.split(",")
-
-                            try:
-                                weights = [float(w) for w in weights]
-                                self.w = weights
-                            except ValueError:
-                                print("\nWARNING: not all weight values in " + config +" could be converted to float")
-                                print("Using default weights of 0 instead"+ Style.RESET_ALL)
+                        weights = weights.split(",")
+                        try:
+                            weights = [float(w) for w in weights]
+                            if weights == [0]:
                                 self.w = []
+                            else:
+                                self.w = weights
+
+                        except ValueError:
+                            print("\nWARNING: not all weight values in " + config +" could be converted to float")
+                            print("Using default weights of 0 instead"+ Style.RESET_ALL)
+                            self.w = []
 
                     elif param[0]=="featureSet":
                         self.featuresFileName=(param[1])
@@ -919,6 +919,7 @@ class Grammar:
                         except:
                             print("\nWARNING: pChangeIndexation could not be converted to float.  Using default value of 0.5")
                             self.pChangeIndexation = 0.5
+
                     elif param[0]=="lexCStartW":
                         try:
                             self.lexCStartW = float(param[1])
@@ -932,6 +933,14 @@ class Grammar:
                         except:
                             print("\nWARNING: localityRestrictionType not assigned.  Using default value of 'overlap'")
                             self.localityRestrictionType = "overlap"
+
+                    elif param[0]=="first_index_strategy":
+                        try:
+                            self.firstIndexStrat = param[1]
+                        except:
+                            print("\n WARNING: first_index_strategy not recognized.  Using default of 'lowest'")
+                            self.firstIndexStrat = "lowest"
+
                     elif param[0]=="PFC_type":
                         self.PFC_type = param[1]
                         if self.PFC_type not in ["none","pseudo","full"]:
@@ -1109,14 +1118,15 @@ class Grammar:
         # grab, create, or fill out the tableau
         tab = self.makeTableau(datum)
 
-        if self.noisy:
-            print(tab)
 
         # Predict an output and compare to observed
         e, obs, pred = tab.compareObsPred(tab.w,threshold=self.comparisonThreshold)
 
         if self.noisy:
+            print(tab)
             print("error" if e else "correct")
+            print("observed: " + obs.c)
+            print("predicted: " + pred.c)
 
         #print(tab)
         #print(obs.violations)
@@ -1799,6 +1809,8 @@ class Grammar:
 
 
         def induce(self,obs,pred,lexemes,con,weights,update,lexCsInTableau):
+            ''' con: the index of the constraint beinf indexed; can use for lexCs 
+            '''
             diffLexemes = getDiffLexemes(self,obs,pred,lexemes)
             for dli in diffLexemes:
                 lex = lexemes[dli]
@@ -1818,10 +1830,27 @@ class Grammar:
                 maxNreached = bool(len([w for w in weights if w > 0]) >= self.lexC_type)
                         
                 if currentIndex == -1: # if there's not a lexC already
-                    if not maxNreached:
+                    clonesAvailable = self.lexCs[con][1:]
+
+                    if len([w for w in clonesAvailable if w >0])>0: # If indexed versions of this constraint already exist
+                        # decide which clone to index this lexeme to
+                        # the 'lowest' strategy
+                        lowest = min([w for w in clonesAvailable if w >0])
+                        cloneToTryIndex = clonesAvailable.index(lowest)
+
+                        # the 'highest' strategy
+
+                        # the random sampling by number of lexemes strategy
+
+
+                        lex.lexCindexes[con] = cloneToTryIndex+1
+                        if self.noisy:
+                            print(self.trainingData.constraintNames[con] + " reindexed on "+ lex.tag + ". New clone is #" + str(cloneToTryIndex+1))
+                    
+                    else: # If there are no copies of this constraint yet
                         weights = induceOne(self,weights,con,lex)
-                    else:
-                        return
+                        if self.noisy:
+                            print("inducing a new copy of " + self.trainingData.constraintNames[con] + " on  " + lex.tag)
 
                 else: # if there is a lexC already, move the index instead
                     # first, find out if the indexed version actually makes a difference

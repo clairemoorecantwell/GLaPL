@@ -42,11 +42,17 @@ def ident(UR,SR):
 Ident = constraint("Ident",ident,MF='F')
 
 
-def syncope(SR):
+def distVH(SR):
     indices = []
     vs = []
     vSum = 0
-    for m in re.finditer('(?=([pnytlmkhwS]_?[ieau]_?[pnytlmkhwS]))',SR):
+    for m in re.finditer('(?=([eiu].*[aUO]))',SR):
+        start = m.start(0)
+        end = start + len(m.group(1))-1
+        indices.append((start,end))
+        vs.append(1)
+        vSum += 1
+    for m in re.finditer('(?=([aUO].*[eiu]))',SR):
         start = m.start(0)
         end = start + len(m.group(1))-1
         indices.append((start,end))
@@ -55,13 +61,28 @@ def syncope(SR):
 
     return (vSum, vs, indices)
 
-Syncope = constraint("Syncope",syncope,MF='M')
+distVH = constraint("distVH",distVH,MF='M')
 
-<<<<<<< HEAD
-#beA
-#beB
+def localVH(SR):
+    indices = []
+    vs = []
+    vSum = 0
+    for m in re.finditer('(?=([eiu][kmnghrtnlds_]*[aUO]))',SR):
+        start = m.start(0)
+        end = start + len(m.group(1))-1
+        indices.append((start,end))
+        vs.append(1)
+        vSum += 1
+    for m in re.finditer('(?=([aUO][kmnghrtnlds_]*[eiu]))',SR):
+        start = m.start(0)
+        end = start + len(m.group(1))-1
+        indices.append((start,end))
+        vs.append(1)
+        vSum += 1
 
-=======
->>>>>>> develop
+    return (vSum, vs, indices)
 
-constraints = [Ident,Syncope]
+localVH = constraint("localVH",localVH,MF='M')
+
+
+constraints = [Ident,distVH,localVH]
