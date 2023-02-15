@@ -57,11 +57,4 @@ def syncope(SR):
 
 Syncope = constraint("Syncope",syncope,MF='M')
 
-<<<<<<< HEAD
-#beA
-#beB
-
-=======
->>>>>>> develop
-
 constraints = [Ident,Syncope]
