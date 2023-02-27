@@ -1,6 +1,6 @@
 # training data filename
 # trainingData: dutchinput
-trainingData: hungarianInput
+trainingData: cShapedInput
 
 
 # starting weights: numbers, separated by commas.
@@ -13,7 +13,7 @@ featureSet: hungarianFeatures
 # add violations
 addViolations: True
 # constraints filename
-constraints: Hungarian_constraints
+constraints: constraints_Cshaped
 
 
 # generate candidates, using operations in the constraints module specified above
@@ -49,7 +49,7 @@ useListedRate: 1
 # What to do with within-item variation?
 # If flip is True, just keep listing whatever correct output you heard on that trial
 # Lexical representations will keep 'flipping' back and forth between output variants
-flip: True
+flip: False
 # Simplest possible version: just encode the first version you hear
 simpleListing: False
 
@@ -60,7 +60,7 @@ simpleListing: False
 
 
 # probability to list a form on error (during learning):
-pToList: 0.2
+pToList: 1
 
 
 
@@ -68,7 +68,7 @@ pToList: 0.2
 # Parameters for Lexical Indexation
 # Number of copies allowed of each constraint (use string "inf" to allow a maximum of one copy per lexical item)
 
-nLexCs: 0
+nLexCs: 10
 
 # Probability of changing a lexical item's indexation on error (rather than updating the weight of the indexed C)
 pChangeIndexation: 1

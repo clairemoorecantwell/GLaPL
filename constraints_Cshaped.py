@@ -57,4 +57,8 @@ def syncope(SR):
 
 Syncope = constraint("Syncope",syncope,MF='M')
 
+#beA
+#beB
+
+
 constraints = [Ident]

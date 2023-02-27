@@ -124,11 +124,17 @@ class Features:
     def featureToS(self, segs, order):
         '''converts a segment dictionary and an ordering to a string '''
         S = []  # in which to store the segments as we find them
+        m = 1 # which morpheme are we on (for adding in the _ marker for morpheme boundaries)
         for s in order:  # go through the segment labels in order
             # if s != "_":
+            w = re.search("(_w)([0123456789]*)",s)
+            if w:
+                thisM = int(w.groups()[1]) # what number of morpheme are we on now (number after the '_w' on the seg label)
+                if thisM != m:
+                    S.append("_")
+                    m = thisM
+
             S.append(self.exists(segs[s], add=True))
-        # else:
-        #   S.append("_")
         return "".join([str(s) for s in S])
 
 
@@ -257,6 +263,7 @@ class Tableau:
         self.w = w
         self.pfcIndex = len(self.w)
         self.negCrossEntropy = 0  # Just for this tableau.  Can multiply by self.prob to get neg log likelihood
+        #print(self)
 
     def __repr__(self):
         return "Tableau object '" + self.tag + "' with " + str(len(self.candidates)) + " candidates.  Winner: " + str(
@@ -264,9 +271,14 @@ class Tableau:
 
     def __str__(self):
         vform = '{:4s} '  # format function for tableau - increase number for more space between cells
-        longCand = max([len(i.c) for i in self.candidates])
+        if len(self.candidates)>0:
+            longCand = max([len(i.c) for i in self.candidates])
+            nViol = len(self.candidates[0].violations)
+        else:
+            longCand = 5
+            nViol = len(self.constraintList)
         cform = '{:>' + str(longCand) + 's} '
-        form = '{:3s} ' + cform + '{:5s} ' * 3 + vform * len(self.candidates[0].violations)
+        form = '{:3s} ' + cform + '{:5s} ' * 3 + vform * nViol
         out = "Tableau " + self.tag + "\n"
         # add functionality for multi-input tableaux
         #print("lexemes:")
@@ -278,18 +290,40 @@ class Tableau:
             vform = ''.join([('{:^' + str(len(i)) + 's} ') for i in names])
             form = '{:3s} ' + cform + '{:5s} ' * 3 + vform
             out += form.format(*[" "] * 5 + [str(j) for j in names])
+        if len(self.candidates)==0:
+            out += '\n (no candidates)'
+            return out
+
         for i in range(0, len(self.candidates)):
+            thisC = self.candidates[i - 1].c
             w = " "
-            if self.candidates[i - 1].c == self.winner:
+            if thisC == self.winner:
                 w = " --> "
             v = self.candidates[i - 1].violations
-            row = [w] + [self.candidates[i - 1].c, self.candidates[i - 1].observedProb, round(self.predProbsList[i - 1],2),
-                         round(self.HList[i - 1],2)] + v
+            if type(self.predProbsList[i - 1]) == float:
+                predProb = round(self.predProbsList[i - 1],2)
+            else:
+                predProb = self.predProbsList[i - 1]
+            if type(self.HList[i - 1]) == float:
+                H = round(self.HList[i - 1],2)
+            else:
+                H = self.HList[i - 1]
+
+            row = [w] + [thisC, self.candidates[i - 1].observedProb, predProb, H] + v
             if len(row)< len(names)+5:
                 row += ['-']*((len(names)+5)-len(row))
 
             out += '\n' + form.format(*[str(j) for j in row])
         return out
+
+    def normalizeProbs(self):
+        self.obsProbsList = [o/sum(self.obsProbsList) for o in self.obsProbsList]
+        # update all the candidates too
+
+        for c,op in zip(self.candidates,self.obsProbsList):
+            c.observedProb = op
+        if type(self.predProbsList[0]) in [int,float]:
+            self.predProbsList = [p/sum(self.predProbsList) for p in self.predProbsList]
 
     def toFile(self):#, w):
         # calculate harmonies, and predicted values
@@ -555,7 +589,7 @@ class Tableau:
                         viols.append(viol)
                     else:
                         viols.append(viol[0]) # assume the first result is always the number
-                cand.violations.append(min(viols)) # assume the closest matched faithful office
+                cand.violations.append(min(viols)) # assume the closest matched faithful candidate
             else:
                 viol = constraint.assignViolations(cand.c)
                 if type(viol) == float:
@@ -597,7 +631,8 @@ class Tableau:
                     lexCname = cname + '_' + str(index) + '_' + lexeme.tag # e.g. Syncope_2_ta
 
                     if cIndex >= cFunctionsStartAfter: # if it's a function
-                        constraint = gram.constraints[cIndex]
+                        #print(gram.constraints)
+                        constraint = gram.constraints[cIndex-cFunctionsStartAfter]
                         #print("isFunction")
                         # now apply it to candidates
                         # according to Paterian locality rules, must overlap with the relevant morpheme
@@ -628,6 +663,11 @@ class Tableau:
         for cand in self.candidates:
             # Calculate that good 'ole dot product!
             cand.harmony = -sum(viol * weight for viol, weight in zip(cand.violations, w))
+            # let's keep harmony at 500
+            if cand.harmony>500:
+                cand.harmony = 500
+            if cand.harmony<-500:
+                cand.harmony = -500
             # harmony will be a negative number if all constraint weights are positive.
             # May become positive when constraint weights go negative
             self.HList.append(cand.harmony)
@@ -646,7 +686,11 @@ class Tableau:
 
             except ZeroDivisionError:
                 print("Somehow your MaxEnt denominator is zero!  Can't calculate probabilities this way")
+                #print(self)
+                print([cand.harmony for cand in self.candidates])
             self.predProbsList.append(cand.predictedProb)
+
+
 
     def getPredWinner(self, w=None, theory='MaxEnt'):
         ''' generates a predicted winner based on weights and theory'''
@@ -691,15 +735,11 @@ class Tableau:
 
     def getObsOutput(self):
         ''' simple function to get the observed output from the obsProbsList'''
-        print(self)
-        print(self.obsProbsList)
-        if sum(self.obsProbsList)>1:
-            self.obsProbsList = [o/sum(self.obsProbsList) for o in self.obsProbsList]
-        print(self.obsProbsList)
         obsOutput = self.surfaceCands[np.random.choice(range(0, len(self.surfaceCands)), 1, p=self.obsProbsList)[0]]
         return obsOutput
 
     def compareObsPred(self, w, theory='MaxEnt',threshold=1):
+        self.normalizeProbs() # make sure all probs in the tableau sum to 1
         predCandidate = self.getPredWinner(w=w, theory=theory)
         if predCandidate.observedProb> threshold:
             return 0, predCandidate, predCandidate
@@ -713,12 +753,13 @@ class Tableau:
 #sampleGrammar =
 
 class Grammar:
-    def __init__(self, config = "config.gl"):
+    def __init__(self, config = "config.gl",inputFile=None):
         self.t = 0
-        self.readFromConfig(config)
+        self.config = config
+        self.readFromConfig(config,inputFile)
 
-    def readFromConfig(self,config="config.gl"):
-        with open("config.gl") as f:
+    def readFromConfig(self,config="config.gl",inputFile=None):
+        with open(config) as f:
             row = 0
             for line in f.readlines():
                 row += 1
@@ -731,7 +772,10 @@ class Grammar:
                         exit()
 
                     if param[0]=="trainingData":
-                        self.trainingDatafile = param[1]
+                        if inputFile is None:
+                            self.trainingDatafile = param[1]
+                        else:
+                            self.trainingDatafile = inputFile
                         try:
                             self.trainingData = trainingData(self.trainingDatafile)
                             self.cfunctionStartIndex = len(self.trainingData.constraintNames)
@@ -976,6 +1020,8 @@ class Grammar:
         print("Training from file: "+self.trainingDatafile)
         print("Feature set: "+self.featuresFileName)
 
+
+
         try:
             if self.addViolations:
                 try:
@@ -996,9 +1042,16 @@ class Grammar:
             else:
                 print("Candidates will not be generated")
         except:
-            print("\n WARNING: You have not specified whether constraint violations should be added to your tableaux via function (using 'addViolations').  Violations will be taken directly from your input file only.")
+            print("\n WARNING: You have not specified whether candidates should be generated (using 'generateCandidates').  Candidates will be taken directly from your input file only.")
         
 
+        try:
+            print("Learning Rate: "+ str(self.learningRate))
+        except:
+            print("\n WARNING: no learning rate specified (using 'learningRate').  Default value of 0.01 will be used.")
+        
+        print("Threshold for considering a prediction an error: "+str(self.comparisonThreshold))
+        print("")
         # self.w
         # TODO finish this up
 
@@ -1157,6 +1210,7 @@ class Grammar:
                     segmentlist = [character for character in re.sub("_","",obs.surfaceForm)]
                     if (tag not in self.trainingData.lexicon) or self.flip:
                         self.trainingData.lexicon[tag] = lexeme(tag, segmentlist)
+
                         with open("listing.txt","a") as f:
                             f.write("\n" + tag + "\t" + "".join(segmentlist) + "\t" + str(self.t))
                     elif not self.simpleListing: # ok, it's listed but the listed form isn't what we just observed
@@ -1192,6 +1246,9 @@ class Grammar:
             if self.PFC_type != 'none':
                 for pfc, p, o in zip(tab.constraintList[tab.pfcIndex:], pred.violations[tab.pfcIndex:],
                                      obs.violations[tab.pfcIndex:]):
+                    #print(pfc)
+                    #print(p)
+                    #print(o)
                     pfc[1].w += (p - o) * self.PFC_lrate
                     pfc[1].w = 0 if pfc[1].w < 0 else pfc[1].w
 
@@ -1212,7 +1269,8 @@ class Grammar:
                             newPFC = PFC(self.PFC_startW, surfaceString=parsed[i])
                             if newPFC not in datum[0][i].PFCs:
                                 datum[0][i].PFCs.append(newPFC)
-                                print("Added ", datum[0][i].tag, newPFC.name)
+                                if self.noisy:
+                                    print("Added ", datum[0][i].tag, newPFC.name)
 
 
                 elif self.PFC_type == "full":
@@ -1267,10 +1325,11 @@ class Grammar:
         PFCs_w = []
         PFC_list = []  # stores every PFC that is ever induced
 
-        playlist = self.createLearningPlaylist(nIterations * nEpochs)
+        self.playlist = self.createLearningPlaylist(nIterations * nEpochs)
+
         # print(playlist)
         for i in range(0, nEpochs):
-            rate = self.epoch(playlist, nIterations, start=nIterations * i)
+            rate = self.epoch(self.playlist, nIterations, start=nIterations * i)
             print(Fore.CYAN + "Epoch " + str(i+1) +": " + str(rate*100) + " % errors"+ Style.RESET_ALL)
 
             grammar_constraints_w.append(self.w)
@@ -1330,15 +1389,66 @@ class Grammar:
 
                 f.write(out)
 
-    def predict(self):
+    def predict(self,outputName="output.txt",newInputName = "newInput.txt"):
         # saving all tableau to output file
         print("predicting")
         obs, pred = self.predictAll()
         results = [t.toFile() for t in pred]
         #print(results)
-        with open("output.txt", 'w') as f:
+        with open(outputName, 'w') as f:
             f.write('\n'.join(results))
         print("Saving output predictions to "+Fore.CYAN+"output.txt"+Style.RESET_ALL)
+
+        with open(newInputName,"w") as f:
+            # print first line
+            firstLine = ['input','lexeme','candidate','obs.prob','tab.prob']+self.trainingData.constraintNames[0:self.cfunctionStartIndex]
+            f.write('\t'.join(firstLine))
+            # get input counts from playlist
+            inptCounts = {}
+            for p in self.playlist:
+                thisInpt = p[2]
+                if thisInpt in inptCounts:
+                    inptCounts[thisInpt] += 1
+                else:
+                    inptCounts[thisInpt] = 1
+
+            for t,dat in zip(pred,obs):
+                line = ["\n"]
+
+                # input
+                inpt = dat[2]
+                # lexeme
+                lexTags = dat[0]
+                #print('lexeme')
+                #print(dat[0])
+                lexemes = []
+                for l in lexTags:
+                    individualMorphTags = l.tag.split("_")
+                    #print(l.tag)
+                    for m in individualMorphTags:
+                        #print(m)
+                        lexemeTag = ''.join(self.trainingData.lexicon[m].segmentList)
+                        lexemes.append(lexemeTag)
+                        #print(lexemes)
+                lexeme = '_'.join(lexemes)
+                #print(lexeme)
+
+                # obs.prob
+                # tab.prob
+                if inpt in inptCounts:
+                    tabProb = inptCounts[inpt]
+                else:
+                    tabProb = 0
+                # violations
+
+                for cand in t.candidates:
+                    candidate = cand.c
+                    obsProb = cand.predictedProb
+                    violations = cand.violations[0:self.cfunctionStartIndex]
+
+                    line = [inpt,lexeme,candidate,obsProb,tabProb]+violations
+                    f.write('\n')
+                    f.write('\t'.join([str(l) for l in line]))
 
 
     def makeTableau(self,datum,rich=False,testFcs=False):
@@ -1347,6 +1457,8 @@ class Grammar:
         ''' it has the form [[lexeme1, lexeme2,...], surface string, input string]'''
         ''' 'input string' is from the input column of the spreadsheet '''
 
+        # can now call by index in trainingData.learnData, or by input
+        # This is for manual calling mostly, to examine what makeTableau is really doing
         if type(datum)==int:
             datum = self.trainingData.learnData[datum]
         elif type(datum)==str:
@@ -1382,15 +1494,7 @@ class Grammar:
             fcs = [] # 'fc' = 'faithful candidate'
             for fc in faiths:
                 if rich:
-                    # begin creating the new richCand
-                    newSegsList = fc[0].segsList[:]
-                    newSegsDict = fc[0].segsDict.copy()
-                    newActivitys = fc[0].activitys[:]
-                    newSuprasegmentals = fc[0].suprasegmentals[:]
-                    for i in range(1, len(fc)):  # go through morphemes
-                        # concatenate seglist
-                        newSegsList += [seg + '_w' + str(i + 1) for seg in fc[i].segsList[:]]
-                if rich:
+                    #print(fc)
                     # begin creating the new richCand
                     newSegsList = fc[0].segsList[:]
                     newSegsDict = fc[0].segsDict.copy()
@@ -1413,6 +1517,7 @@ class Grammar:
 
                 else:
                     fcs.append("_".join([i for i in fc]))
+
             return fcs
 
         # def generateCandidates(cands):  <- candidate generation goes here
@@ -1744,6 +1849,9 @@ class Grammar:
             tab.applyLexCs(self.lexCs,self,fcs,self.localityRestrictionType)
 
         # Apply PFCs, including to multiple distinct inputs if we have a multi-input tableau
+        if self.PFC_type!= "none":
+            tab.applyPFCs()
+
 
         return tab
 
@@ -2021,6 +2129,34 @@ class Grammar:
         return loglik
 
 
+class IteratedLearning:
+    def __init__(self,startState,nEpochs,itPerEpoch,pause=False,folderName="iterated_learning_output"):
+        self.startState = startState
+        self.currentState = startState
+        self.nEpochs = nEpochs
+        self.itPerEpoch = itPerEpoch
+        self.pause = pause
+        self.folderName = folderName
+        #self.resultsList = []
+
+    def iterate(self,nGenerations):
+        for gen in range(0,nGenerations):
+            self.currentState.learn(self.itPerEpoch,self.nEpochs)
+
+            outputName = self.folderName+"/output_gen"+str(gen)+".txt"
+            newInputName = self.folderName+"/input_gen"+str(gen+1)+".txt"
+            print(newInputName)
+            self.currentState.predict(outputName,newInputName)
+            print("Generation "+str(gen)+" learned")
+            
+            #if self.pause:
+            #    input("Press Enter to continue...")
+
+            self.currentState = Grammar(self.startState.config,inputFile=newInputName)
+
+
+
+
 class lexeme:
     def __init__(self, tag, segmentList=None, kind=None):
         self.tag = tag  # label for the lexeme, so the humans can easily see what it is.  ex. 'tagi' '-ina', even things like 'PV' or '3rdsing'
@@ -2112,37 +2248,6 @@ class lexeme:
                 ind = self.linearSegOrder.index(i)
                 UR += self.segmentList[ind]
         return [UR]
-
-
-
-
-
-def exlex_joli():
-    # joli    A simple adjective with nothing fancy
-    return lexeme('joli', kind='Adj')
-
-
-def exlex_petit():
-    # petit    An adjective with partial activation on the final t
-    p = lexeme('petit', kind='Adj')
-    p.activitys = [1, 1, 1, 1, 0.4]
-    p.PFCs = [PFC(10, ('1', 'voice'), 'e'), PFC(10, ('1', 'labial'), 'p'), PFC(10, ('1', 'coronal'), 't4')]
-    return p
-
-
-def exlex_ami():
-    # ami    Noun with three competing segments in first position
-    a = lexeme('ami', segmentList=['t', 'z', 'n', 'a', 'm', 'i'], kind='Noun')
-    a.linearSegOrder = [1, 1, 1, 2, 3, 4]
-    a.activitys = [0.6, 0.6, 0.6, 1, 1, 1]
-    a.PFCs = [PFC(10, ('1', 'nasal'), 'n'), PFC(10, ('0', 'voice'), 't'), PFC(10, ('1', 'low'), 'a')]
-    return a
-
-
-def exlex_hero():
-    # hero    A noun that lacks and liason consonants in its lexical representation
-    return lexeme('ero', kind='Noun')
-
 
 class PFC:  # Contains function(s) for calculating a PFC's violations
     def __init__(self, w, feature=None, seg=None, seg2=None, surfaceString=None, typ='feature_on_segment'):
