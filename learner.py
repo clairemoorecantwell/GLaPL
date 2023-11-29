@@ -10,6 +10,7 @@ import random
 import sys
 from colorama import Fore, Back, Style
 import importlib
+import datetime
 
 class Features:
     def __init__(self, filename, skipChar='x'):
@@ -756,6 +757,7 @@ class Grammar:
     def __init__(self, config = "config.gl",inputFile=None):
         self.t = 0
         self.config = config
+        self.inputFile = inputFile
         self.readFromConfig(config,inputFile)
 
     def readFromConfig(self,config="config.gl",inputFile=None):
@@ -785,19 +787,25 @@ class Grammar:
                             exit()
                             
                     elif param[0] == "weights":
+                        self.startWeightParam = param[1]
                         weights = param[1]
+                        print(weights)
                         weights = weights.split(",")
-                        try:
-                            weights = [float(w) for w in weights]
-                            if weights == [0]:
-                                self.w = []
-                            else:
-                                self.w = weights
+                        print(weights)
+                        if weights[0] !='random':
+                            try:
+                                weights = [float(w) for w in weights]
+                                if weights == [0]:
+                                    self.w = []
+                                else:
+                                    self.w = weights
 
-                        except ValueError:
-                            print("\nWARNING: not all weight values in " + config +" could be converted to float")
-                            print("Using default weights of 0 instead"+ Style.RESET_ALL)
-                            self.w = []
+                            except ValueError:
+                                print("\nWARNING: not all weight values in " + config +" could be converted to float")
+                                print("Using default weights of 0 instead"+ Style.RESET_ALL)
+                                self.w = []
+                        else:
+                            self.w = weights
 
                     elif param[0]=="featureSet":
                         self.featuresFileName=(param[1])
@@ -829,6 +837,8 @@ class Grammar:
                         # but before initializing LexCs
                         if len(self.w)==0:
                             self.initializeWeights()
+                        elif self.w[0]=='random':
+                            self.initializeWeights(self.w)
 
                     elif param[0]=="generateCandidates":
                         try:
@@ -844,11 +854,19 @@ class Grammar:
                                 print("\nWARNING: you have specified generateCandidates as 'True' but no operations could be read off the constraints module.\n Ensure that your constraints module " + self.constraints +" exists, and contains an object called 'operations'.\n No operations are in effect.")
 
                     elif param[0]=="learningRate":
+                        learningRate = param[1]
+                        learningRate = learningRate.split(",")
                         try:
-                            self.learningRate = float(param[1])
+                            if len(learningRate)==2:
+                                self.learningRate = learningRate
+                            elif len(learningRate)==1:
+                                self.learningRate = [learningRate[0],learningRate[0]]
+                            else:
+                                print("\nWARNING: learningRate could not be converted to float.  Using 0.01")
+                                self.learningRate = [0.01,0.01]
                         except:
                             print("\nWARNING: learningRate could not be converted to float.  Using 0.01")
-                            self.learningRate = 0.01
+                            self.learningRate = [0.01,0.01]
 
                     elif param[0]=="decayRate":
                         try:
@@ -856,6 +874,17 @@ class Grammar:
                         except:
                             print("\nWARNING: decayRate could not be converted to float.  Using 0.0001")
                             self.decayRate = 0.0001
+
+                    elif param[0]=="decayType":
+                        try:
+                            self.decayType = param[1]
+                        except:
+                            print("\nWARNING: decayType not recognized.  Using static decay")
+                            self.decayType = "static"
+
+                        if self.decayType not in ["static","L1","L2"]:
+                            print("\nWARNING: decayType not recognized.  Using static decay")
+                            self.decayType = "static"
 
                     elif param[0]=="threshold":
                         try:
@@ -876,6 +905,8 @@ class Grammar:
                             self.noisy = False
 
                     elif param[0]=="useListedType":
+                        self.useListedType = param[1]
+
                         if param[1]=="hidden_structure":
                             self.p_useListed = 3
                         elif param[1]=="sample_using_frequency":
@@ -930,6 +961,8 @@ class Grammar:
                             except:
                                 print("\nWARNING: flip must be True or False.  Using default of False.")
                                 self.flip = False
+                        else:
+                            self.flip = False
 
                     elif param[0]=="simpleListing":
                         if self.p_useListed>0:
@@ -941,7 +974,8 @@ class Grammar:
 
                             if self.simpleListing and self.flip:
                                 print("\nWARNING: simpleListing and flip are mutually exclusive.  Setting flip to False.")
-
+                        else:
+                            self.simpleListing = False
                     elif param[0]=="pToList":
                         try:
                             self.pToList = float(param[1])
@@ -1013,6 +1047,28 @@ class Grammar:
                             print("\nWARNING: activityUpdateRate could not be converted to float.  Using default value of 0.05")
                             self.activityUpdateRate = 0.05
 
+                    elif param[0]=="outfolder":
+                        try:
+                            self.outfolder = param[1]
+                        except:
+                            #### TODO: make better warning message
+                            print("\nWARNING: outfolder doesn't work")
+
+                    elif param[0]=="logFile":
+                        try:
+                            self.logFile = param[1]
+                        except:
+                            #### TODO: make better warning message
+                            print("\n WARNING: logfile doesn't work")
+
+                    elif param[0]=="label":
+                        try:
+                            self.label = param[1]
+                        except:
+                            #### TODO: make better warning message
+                            print("\n WARNING: label doesn't work")
+
+
                     else:
                         print("\n WARNING: I don't recognize the parameter " + param[0])
 
@@ -1062,8 +1118,6 @@ class Grammar:
         print(printform.format(*[str(i) for i in self.w])+Style.RESET_ALL)
 
     def prepForUselisted(self):
-        with open("listing.txt","w") as f:
-            f.write("lexemes \t segments \t listed_at_timestep")
         UseListedIndex = None
 
         # create a list of tuples pairing up plain and listed versions of each relevant constraint
@@ -1120,6 +1174,12 @@ class Grammar:
         #print(nC)
         if w is None:
             self.w = [0] * nC
+        elif w[0] =='random':
+            upper = float(w[2])
+            lower = float(w[1])
+            self.w = [random.random()*(upper-lower)+lower]
+            for i in range(1,nC):
+                self.w.append(random.random()*(upper-lower)+lower)
         else:
             if len(w) == nC:
                 self.w = w
@@ -1138,19 +1198,16 @@ class Grammar:
         weights = [round(freq / total, 10) for freq in frequencies]
         return weights
 
-    def update(self, datum):  # datum is an entry from playlist
+    def update(self, datum, learningRate):  # datum is an entry from playlist
         # Start with a learning datum
         lexemes = datum[0]
-
-        #print(lexemes)
-        #print(self.w)
 
         # TODO this code is recapitulated inside Grammar.makeTableau()
         # streamline?
         if self.p_useListed == 0:  # If we're not doing useListed at all
             # Decay the existing PFCs affiliated with each lexeme, and remove zero weighted ones
             for lex in lexemes:
-                lex.decayPFC(self.t, self.decayRate, decayType="static")
+                lex.decayPFC(self.t, self.decayRate, decayType=self.decayType)
                 #print("decaying")
                 if len(lex.PFCs) > len(self.featureSet.featureNames) * len(lex.segLabels) * 4:
                     print("WARNING: too many PFCs")
@@ -1161,14 +1218,23 @@ class Grammar:
                 lex.lastSeen = self.t
                 lex.freq += 1
 
-
-
+        #decay LexCs
         if self.lexC_type:
-            # print("decaying")
             for c in range(0, len(self.lexCs)):
-                self.lexCs[c] = [i - self.decayRate for i in self.lexCs[c]]  # decay all lexC's
+
+                # decay all lexCs
+                if self.decayType == "static":
+                    self.lexCs[c] = [i - self.decayRate for i in self.lexCs[c]] 
+
+                elif self.decayType == 'L1':
+                    self.lexCs[c] = [i - self.decayRate*i for i in self.lexCs[c]]
+
+                elif self.decayType == 'L2':
+                    self.lexCs[c] = [i - (self.decayRate/2)*(i**2) for i in self.lexCs[c]]
+                
                 self.lexCs[c] = [i if i > 0 else 0 for i in self.lexCs[c]]  # lower bound at zero
-        # print(self.lexCs)
+
+
 
         # grab, create, or fill out the tableau
         tab = self.makeTableau(datum)
@@ -1195,7 +1261,7 @@ class Grammar:
             # update general weight: perceptron update
             updateVector = [float(p) - float(o) for p, o in zip(pred.violations, obs.violations)]
             #print(updateVector)
-            self.w = [float(wt) + up * self.learningRate for wt, up in zip(self.w, updateVector)]
+            self.w = [float(wt) + up * learningRate for wt, up in zip(self.w, updateVector)]
             self.w = [i if i > 0 else 0 for i in self.w]  # limit to positve constraint weights
             #################################################################
             #print(self.w)
@@ -1211,7 +1277,7 @@ class Grammar:
                     if (tag not in self.trainingData.lexicon) or self.flip:
                         self.trainingData.lexicon[tag] = lexeme(tag, segmentlist)
 
-                        with open("listing.txt","a") as f:
+                        with open(self.listingFilenamen,"a") as f:
                             f.write("\n" + tag + "\t" + "".join(segmentlist) + "\t" + str(self.t))
                     elif not self.simpleListing: # ok, it's listed but the listed form isn't what we just observed
                         nTag = 2
@@ -1236,7 +1302,7 @@ class Grammar:
             ##################################################################
             # Lexically-indexed constraints
             if self.lexC_type:
-                self.lexCupdate(obs, pred, updateVector, datum[0],tab)
+                self.lexCupdate(obs, pred, updateVector, datum[0],tab, learningRate)
 
 
 
@@ -1306,11 +1372,10 @@ class Grammar:
         # print(self.w)
         return e
 
-    def epoch(self, playlist, niter, start=0):
+    def epoch(self, playlist, niter, learningRate, start=0):
         errors = 0
         for i in range(0, niter):
-            errors += self.update(playlist[start + i])
-        # print(start+i)
+            errors += self.update(playlist[start + i],learningRate)
 
         error_rate = errors / niter
 
@@ -1320,74 +1385,237 @@ class Grammar:
         #
         return error_rate
 
-    def learn(self, nIterations, nEpochs, outFile="output.txt"):
-        grammar_constraints_w = []
-        PFCs_w = []
-        PFC_list = []  # stores every PFC that is ever induced
-
-        self.playlist = self.createLearningPlaylist(nIterations * nEpochs)
-
-        # print(playlist)
-        for i in range(0, nEpochs):
-            rate = self.epoch(self.playlist, nIterations, start=nIterations * i)
-            print(Fore.CYAN + "Epoch " + str(i+1) +": " + str(rate*100) + " % errors"+ Style.RESET_ALL)
-
-            grammar_constraints_w.append(self.w)
-            currentPFC_w = [0 for i in PFCs_w[-1]] if len(PFC_list) > 0 else []
-            for lexeme in self.trainingData.lexicon.values():
-                #if type(lexeme) == 'lexeme':
-                for pfc in lexeme.PFCs:
-                    name = lexeme.tag + "_" + pfc.name
-                    if name not in PFC_list:
-                        PFC_list.append(name)
-                        currentPFC_w.append(0)  # make it the right length to accommodate the new PFCs
-                    currentPFC_w[PFC_list.index(name)] = pfc.w
-            PFCs_w.append(currentPFC_w)
-
-        print(Fore.BLUE + Back.WHITE +"\n Final constraint weights:")
-        printform= ''.join([('{:^'+str(len(cname)+3)+'s} ') for cname in self.trainingData.constraintNames])
-        print( '\n'+printform.format(*[str(i) for i in self.trainingData.constraintNames]))
-        print(printform.format(*[str(round(i,2)) for i in self.w])+Style.RESET_ALL)
+    def learn(self, nIterations, nEpochs, nRuns = 1):
+        runSummaryFilename = self.outfolder+'/'+"runSummary_"+self.label+".txt"
+        outFilename = self.outfolder+'/'+"tableaux_"+self.label+"_"
+        weightsFilename = self.outfolder+'/'+"weights_"+self.label+"_"
+        pfcsFilename = self.outfolder+'/'+"PFCs_"+self.label+"_"
+        lexCsFilename = self.outfolder+'/'+"lexCs_"+self.label+"_"
+        errRatesFilename = self.outfolder+'/'+"errRates_"+self.label+"_"
+        lexCweightsFilename = self.outfolder+'/'+"lexCws_"+self.label+"_"
+        indexesFilename = self.outfolder + '/' + "indexes_"+self.label+"_"
+        self.listingFilename = self.outfolder+'/'+"listing_"+self.label+"_"
 
 
+        with open(runSummaryFilename,"w") as f:
+            f.write('\t'.join(self.trainingData.constraintNames+["SSE","logLikelihood","errorRate"]))
 
-        #print("PFC_list")
-        #print(PFC_list)
-        #print("PFCs_w")
-        #print(PFCs_w)
+        for n in range(0,nRuns):
 
-        self.predict()
-        
-        with open("weights.txt", "w") as f:
-            #print(grammar_constraints_w)
-            out = ""
-            for ep in grammar_constraints_w:
-                out += "\n" + "\t".join([str(w) for w in ep])
-            f.write(out)
+            self.readFromConfig(self.config,self.inputFile)
 
-        # print("learning complete")
-        with open("PFCs.txt", "w") as f:
-            out = "\t".join(PFC_list)
-            for ep in PFCs_w:
-                out += "\n" + "\t".join([str(pfc) for pfc in ep] + ["0" for i in PFC_list[len(ep):]])
-            f.write(out)
+            if self.p_useListed >0:
+                self.listingFilenamen = self.listingFilename+str(n)+'.txt'
+                with open(self.listingFilename+str(n)+'.txt',"w") as f:
+                    f.write("lexemes \t segments \t listed_at_timestep")
 
-        if self.lexC_type:
-            with open("lexCs.txt","w") as f:
+            grammar_constraints_w = []
+            PFCs_w = []
+            PFC_list = []  # stores every PFC that is ever induced
+
+            self.playlist = self.createLearningPlaylist(nIterations * nEpochs)
+
+            # setup for changing the learning rate throughout learning
+            startLearningRate = float(self.learningRate[0])
+            endLearningRate = float(self.learningRate[1])
+            learningRateDecrement = (startLearningRate - endLearningRate)/nEpochs
+            currentLearningRate = startLearningRate
+
+
+
+            # tracking error rates each epoch
+            last10PerErr = 0
+            last10PerCount = 0
+            rates = []
+
+            # tracking lexCs weights per epoch
+            lexCsOverTime = []
+
+            indexesOverTime = []
+            for c in self.w:
+                thisDict = {}
+                for lexkey in self.trainingData.lexicon.keys():
+                    thisDict[lexkey] = [(0,0)]  # each entry will be weight, index
+                indexesOverTime+=[thisDict]
+
+            for i in range(0, nEpochs):
+
+                rate = self.epoch(self.playlist, nIterations, currentLearningRate, start=nIterations * i)
+                print(Fore.CYAN + "Epoch " + str(i+1) +": " + str(rate*100) + " % errors"+ Style.RESET_ALL)
+                rates.append(rate)
+                if i>= (nEpochs-(nEpochs/10)):
+                    last10PerErr += rate
+                    last10PerCount += 1
+                elif nEpochs <= 10:
+                    last10PerCount = 1
+                    last10PerErr = rate
+
+                if self.lexC_type:
+                    lexCsOverTime.append(self.lexCs[:])
+
+                    for ci in range(0,len(indexesOverTime)): # go through constraints
+                        wlist = self.lexCs[ci] # list of weights
+                        for lexkey in self.trainingData.lexicon.keys():
+                            windex = self.trainingData.lexicon[lexkey].lexCindexes[ci] # the index
+                            indexesOverTime[ci][lexkey].append((wlist[windex],windex))
+
+
+                grammar_constraints_w.append(self.w)
+                currentPFC_w = [0 for i in PFCs_w[-1]] if len(PFC_list) > 0 else []
+                for lexeme in self.trainingData.lexicon.values():
+                    #if type(lexeme) == 'lexeme':
+                    for pfc in lexeme.PFCs:
+                        name = lexeme.tag + "_" + pfc.name
+                        if name not in PFC_list:
+                            PFC_list.append(name)
+                            currentPFC_w.append(0)  # make it the right length to accommodate the new PFCs
+                        currentPFC_w[PFC_list.index(name)] = pfc.w
+                PFCs_w.append(currentPFC_w)
+
+                #learning rate decrement, if there is a schedule
+                currentLearningRate = currentLearningRate - learningRateDecrement
+
+            
+            print(Fore.GREEN + Back.WHITE +"\n Run Number: "+ str(n))
+            print(Fore.BLUE + Back.WHITE +"\n Final constraint weights:")
+            printform= ''.join([('{:^'+str(len(cname)+3)+'s} ') for cname in self.trainingData.constraintNames])
+            print( '\n'+printform.format(*[str(i) for i in self.trainingData.constraintNames]))
+            print(printform.format(*[str(round(i,2)) for i in self.w])+Style.RESET_ALL)
+
+
+            self.predict(outFilename+str(n)+".txt")
+            
+            with open(errRatesFilename+str(n)+".txt","w") as f:
+                f.write("errorRate")
+                f.write("\n")
+                f.write("\n".join([str(e) for e in rates]))
+
+            if self.lexC_type:
+                with open(lexCweightsFilename+str(n)+".txt","w") as f:
+                    columns = []
+                    for col in lexCsOverTime[0]:
+                        columns += [[]]
+                    for line in lexCsOverTime:
+                        for col in range(0,len(line)):
+                            columns[col].append(line[col])
+
+                    
+                    newCols = []
+                    for col in lexCsOverTime[0]:
+                        newCols += [[]]
+                    for col in range(0,len(columns)):
+                        m = max([len(x) for x in columns[col]])
+                        for l in columns[col]:
+                            xtras = []
+                            if len(l)<m: # fill out trailing zeros, to make each row the same length
+                                xtras = [0]*(m-len(l))
+                            newLine = [self.trainingData.constraintNames[col]]
+                            newLine = newLine + l[1:] + xtras  # removing that first zero that is a placeholder
+                            newCols[col].append(newLine)
+
+                    #print(newCols)
+                    #print first line
+                    line1 = []
+                    for column in range(0,len(columns)):
+                        ncols = len(newCols[column][0])
+                        conname = newCols[column][0][0]
+
+                        for i in range(1,ncols):
+                            line1.append(conname+str(i))
+
+                    f.write("\t".join(line1))
+
+                    for lineN in range(0,len(newCols[0])):
+                        f.write("\n")
+                        l = []
+                        for colN in range(0,len(newCols)):
+                            l += newCols[colN][lineN][1:]
+                        
+                        f.write("\t".join([str(j) for j in l]))
+
+                with open(indexesFilename+str(n)+".txt","w") as f:
+                    keys = list(self.trainingData.lexicon.keys())[:] # to preserve order
+                    firstLine = []
+                    for key in keys:
+                        for c in self.trainingData.constraintNames:
+                            firstLine.append(key+"_"+c+"_w")
+                            firstLine.append(key+"_"+c+"_i")
+                    f.write("\t".join(firstLine))
+
+                    firstKey = keys[0]
+                    for row in range(0,len(indexesOverTime[0][firstKey])): # these should all be the same length, the # of epochs
+                        theRow = []
+                        for lexkey in keys:
+                            for c in range(0,len(indexesOverTime)): #constraints
+                                weight = indexesOverTime[c][lexkey][row][0]
+                                index = indexesOverTime[c][lexkey][row][1]
+                                theRow.append(weight)
+                                theRow.append(index)
+                        f.write("\n")
+                        f.write("\t".join([str(i) for i in theRow]))
+
+
+            with open(weightsFilename+str(n)+".txt", "w") as f:
+                #print(grammar_constraints_w)
                 out = ""
-                for i in range(0,len(self.lexCs)):
-                    out += self.trainingData.constraintNames[i] + "\n"
-                    for j in range(1,len(self.lexCs[i])):
-                        out += str(self.lexCs[i][j]) + "\t"
-                        for l in self.trainingData.lexicon:
-                            if self.trainingData.lexicon[l].lexCindexes[i]==j:
-                                out += l + "\t"
-                        out += "\n"
-                    out += "\n"
-                    #out += "\t".join([str(w) for w in self.lexCs[i][1:]]) + "\n"
-
-
+                for ep in grammar_constraints_w:
+                    out += "\n" + "\t".join([str(w) for w in ep])
                 f.write(out)
+
+            # print("learning complete")
+            with open(pfcsFilename+str(n)+".txt", "w") as f:
+                out = "\t".join(PFC_list)
+                for ep in PFCs_w:
+                    out += "\n" + "\t".join([str(pfc) for pfc in ep] + ["0" for i in PFC_list[len(ep):]])
+                f.write(out)
+
+            if self.lexC_type:
+                with open(lexCsFilename+str(n)+".txt","w") as f:
+                    out = ""
+                    for i in range(0,len(self.lexCs)):
+                        out += self.trainingData.constraintNames[i] + "\n"
+                        for j in range(1,len(self.lexCs[i])):
+                            out += str(self.lexCs[i][j]) + "\t"
+                            for l in self.trainingData.lexicon:
+                                if self.trainingData.lexicon[l].lexCindexes[i]==j:
+                                    out += l + "\t"
+                            out += "\n"
+                        out += "\n"
+                        #out += "\t".join([str(w) for w in self.lexCs[i][1:]]) + "\n"
+                    f.write(out)
+
+            with open(runSummaryFilename,"a") as f:
+                f.write('\n')
+                f.write('\t'.join([str(w) for w in self.w]+[str(self.SSE()),str(self.logLikelihood()),str(last10PerErr/last10PerCount)]))
+
+        with open(self.logFile,"a") as f:
+            f.write('\n')
+            f.write(str(datetime.datetime.now())+'\t')
+            f.write(self.trainingDatafile+'\t')
+            f.write('\t'.join(self.trainingData.constraintNames))
+            f.write('\t'+self.outfolder+'\t')
+            f.write(self.label+'\t')
+            f.write(self.startWeightParam+'\t')
+            f.write(self.featuresFileName+'\t')
+            f.write(str(self.addViolations)+'\t')
+            f.write(str(self.constraintsModule)+'\t')
+            f.write(str(self.generateCandidates)+'\t')
+            f.write(str(self.learningRate)+'\t')
+            f.write(str(self.decayRate)+'\t')
+            f.write(str(self.comparisonThreshold)+'\t')
+            f.write(str(self.useListedType)+'\t')
+            f.write(str(self.p_useListed)+'\t')
+            f.write(str(self.flip)+'\t')
+            f.write(str(self.simpleListing)+'\t')
+            f.write(str(self.pToList)+'\t')
+            f.write(str(self.lexC_type)+'\t')
+            f.write(str(self.pChangeIndexation)+'\t')
+            f.write(str(self.lexCStartW)+'\t')
+            f.write(str(self.localityRestrictionType)+'\t')
+            f.write(str(self.firstIndexStrat)+'\t')
+            f.write(str(self.PFC_type)+'\t')
+            f.write(str(self.PFC_lrate)+'\t')
+            f.write(str(self.PFC_startW)+'\t')
 
     def predict(self,outputName="output.txt",newInputName = "newInput.txt"):
         # saving all tableau to output file
@@ -1855,13 +2083,13 @@ class Grammar:
 
         return tab
 
-    def lexCupdate(self,obs,pred,updateVector,lexemes,tab):
+    def lexCupdate(self,obs,pred,updateVector,lexemes,tab,learningRate):
         # print("updating lexCs")
 
         def updateLexCweight(self,weights,conIndex,thisLexemeIndex,update):
             #print(thisLexemeIndex)
             if thisLexemeIndex >= 0 and weights and weights[thisLexemeIndex]:
-                self.lexCs[conIndex][thisLexemeIndex + 1] += update * self.learningRate
+                self.lexCs[conIndex][thisLexemeIndex + 1] += update * learningRate
 
         def getMaxOrMinW(self,weights,update):
             if weights and update > 0:
@@ -1931,8 +2159,8 @@ class Grammar:
 
                 w = weights[currentIndex] if (weights and currentIndex>=0) else 0
 
-                # if a lexC has decayed to zero, remove the indexation from the lexeme
-                if w == 0:
+                # if a lexC has decayed to (close enough to) zero, remove the indexation from the lexeme
+                if w < self.decayRate:
                     lex.lexCindexes[con] = 0
                     currentIndex = -1
                     # print("re-indexed to zero")
@@ -2004,7 +2232,10 @@ class Grammar:
                     return
             
             elif w == mn:
-                updateLexCweight(self,weights,genCindex,currentIndex,update)
+                # current way: if we're at the lowest indexed C trying to go down, un-index
+                lex.lexCindexes[genCindex]=0
+                # old way: never un-index, just move the weight of the indexed C down
+                #updateLexCweight(self,weights,genCindex,currentIndex,update)
                 return
 
             # (else) find the next best weight
