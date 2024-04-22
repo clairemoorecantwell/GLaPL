@@ -789,9 +789,9 @@ class Grammar:
                     elif param[0] == "weights":
                         self.startWeightParam = param[1]
                         weights = param[1]
-                        print(weights)
+                        #print(weights)
                         weights = weights.split(",")
-                        print(weights)
+                        #print(weights)
                         if weights[0] !='random':
                             try:
                                 weights = [float(w) for w in weights]
@@ -1073,49 +1073,54 @@ class Grammar:
                         print("\n WARNING: I don't recognize the parameter " + param[0])
 
         # check if all the parameters are there that should be
-        print("Training from file: "+self.trainingDatafile)
-        print("Feature set: "+self.featuresFileName)
+        if self.noisy:
+            print("Training from file: "+self.trainingDatafile)
+            print("Feature set: "+self.featuresFileName)
 
 
 
         try:
             if self.addViolations:
                 try:
-                    print("Violations will be added from "+ self.constraintsModule)
+                    if self.noisy:
+                        print("Violations will be added from "+ self.constraintsModule)
                 except:
                     print(Fore.RED +"\n ERROR: no constraints module found!  Specify the name under parameter 'constraints'."+Style.RESET_ALL)
             else:
-                print("Constraint violations come only from input file")
+                if self.noisy:
+                    print("Constraint violations come only from input file")
         except:
             print("\n WARNING: You have not specified whether constraint violations should be added to your tableaux via function (using 'addViolations').  Violations will be taken directly from your input file only.")
 
         try:
             if self.generateCandidates:
                 try:
-                    print("Candidates will be generated, using module "+ self.constraintsModule)
+                    if self.noisy:
+                        print("Candidates will be generated, using module "+ self.constraintsModule)
                 except:
                     print(Fore.RED +"\n ERROR: no constraints module found!  Specify the name under parameter 'constraints'."+Style.RESET_ALL)
             else:
-                print("Candidates will not be generated")
+                if self.noisy:
+                    print("Candidates will not be generated")
         except:
             print("\n WARNING: You have not specified whether candidates should be generated (using 'generateCandidates').  Candidates will be taken directly from your input file only.")
         
+        if self.noisy:
+            try:
+                print("Learning Rate: "+ str(self.learningRate))
+            except:
+                print("\n WARNING: no learning rate specified (using 'learningRate').  Default value of 0.01 will be used.")
+        if self.noisy:
+            print("Threshold for considering a prediction an error: "+str(self.comparisonThreshold))
+            print("")
+            # self.w
+            # TODO finish this up
 
-        try:
-            print("Learning Rate: "+ str(self.learningRate))
-        except:
-            print("\n WARNING: no learning rate specified (using 'learningRate').  Default value of 0.01 will be used.")
-        
-        print("Threshold for considering a prediction an error: "+str(self.comparisonThreshold))
-        print("")
-        # self.w
-        # TODO finish this up
-
-        # Print out constraint names and weights at end of read-in
-        print(Fore.BLUE + Back.WHITE +"\nYour constraints and starting weights:")
-        printform= ''.join([('{:^'+str(len(cname))+'s} ') for cname in self.trainingData.constraintNames])
-        print( '\n'+printform.format(*[str(i) for i in self.trainingData.constraintNames]))
-        print(printform.format(*[str(i) for i in self.w])+Style.RESET_ALL)
+            # Print out constraint names and weights at end of read-in
+            print(Fore.BLUE + Back.WHITE +"\nYour constraints and starting weights:")
+            printform= ''.join([('{:^'+str(len(cname))+'s} ') for cname in self.trainingData.constraintNames])
+            print( '\n'+printform.format(*[str(i) for i in self.trainingData.constraintNames]))
+            print(printform.format(*[str(i) for i in self.w])+Style.RESET_ALL)
 
     def prepForUselisted(self):
         UseListedIndex = None
@@ -1144,13 +1149,15 @@ class Grammar:
             self.w.append(0)
             
             UseListedIndex = self.trainingData.constraintNames.index("UseListed")
-            print("\n ...adding UseListed at index " + str(UseListedIndex))
+            if self.noisy:
+                print("\n ...adding UseListed at index " + str(UseListedIndex))
 
 
         return indexPairs, toRemove, UseListedIndex
 
     def prepForLexC(self):
-        print("\nReady to learn with lexical indexation.  Maximum " + str(self.lexC_type) + " copies of each constraint.")
+        if self.noisy:
+            print("\nReady to learn with lexical indexation.  Maximum " + str(self.lexC_type) + " copies of each constraint.")
         self.lexCs = [[0] for i in self.w]
         # create a vector for every constraint
         # go through the lexicon, add in index vectors
@@ -1397,8 +1404,8 @@ class Grammar:
         self.listingFilename = self.outfolder+'/'+"listing_"+self.label+"_"
 
 
-        with open(runSummaryFilename,"w") as f:
-            f.write('\t'.join(self.trainingData.constraintNames+["SSE","logLikelihood","errorRate"]))
+        #with open(runSummaryFilename,"w") as f:
+        #    f.write('\t'.join(self.trainingData.constraintNames+["SSE","logLikelihood","errorRate"]))
 
         for n in range(0,nRuns):
 
@@ -1441,7 +1448,8 @@ class Grammar:
             for i in range(0, nEpochs):
 
                 rate = self.epoch(self.playlist, nIterations, currentLearningRate, start=nIterations * i)
-                print(Fore.CYAN + "Epoch " + str(i+1) +": " + str(rate*100) + " % errors"+ Style.RESET_ALL)
+                if self.noisy:
+                    print(Fore.CYAN + "Epoch " + str(i+1) +": " + str(rate*100) + " % errors"+ Style.RESET_ALL)
                 rates.append(rate)
                 if i>= (nEpochs-(nEpochs/10)):
                     last10PerErr += rate
@@ -1475,12 +1483,12 @@ class Grammar:
                 #learning rate decrement, if there is a schedule
                 currentLearningRate = currentLearningRate - learningRateDecrement
 
-            
-            print(Fore.GREEN + Back.WHITE +"\n Run Number: "+ str(n))
-            print(Fore.BLUE + Back.WHITE +"\n Final constraint weights:")
-            printform= ''.join([('{:^'+str(len(cname)+3)+'s} ') for cname in self.trainingData.constraintNames])
-            print( '\n'+printform.format(*[str(i) for i in self.trainingData.constraintNames]))
-            print(printform.format(*[str(round(i,2)) for i in self.w])+Style.RESET_ALL)
+            if self.noisy:
+                print(Fore.GREEN + Back.WHITE +"\n Run Number: "+ str(n))
+                print(Fore.BLUE + Back.WHITE +"\n Final constraint weights:")
+                printform= ''.join([('{:^'+str(len(cname)+3)+'s} ') for cname in self.trainingData.constraintNames])
+                print( '\n'+printform.format(*[str(i) for i in self.trainingData.constraintNames]))
+                print(printform.format(*[str(round(i,2)) for i in self.w])+Style.RESET_ALL)
 
 
             self.predict(outFilename+str(n)+".txt")
@@ -1563,11 +1571,11 @@ class Grammar:
                 f.write(out)
 
             # print("learning complete")
-            with open(pfcsFilename+str(n)+".txt", "w") as f:
-                out = "\t".join(PFC_list)
-                for ep in PFCs_w:
-                    out += "\n" + "\t".join([str(pfc) for pfc in ep] + ["0" for i in PFC_list[len(ep):]])
-                f.write(out)
+            #with open(pfcsFilename+str(n)+".txt", "w") as f:
+            #    out = "\t".join(PFC_list)
+            #    for ep in PFCs_w:
+            #        out += "\n" + "\t".join([str(pfc) for pfc in ep] + ["0" for i in PFC_list[len(ep):]])
+            #    f.write(out)
 
             if self.lexC_type:
                 with open(lexCsFilename+str(n)+".txt","w") as f:
@@ -1584,9 +1592,9 @@ class Grammar:
                         #out += "\t".join([str(w) for w in self.lexCs[i][1:]]) + "\n"
                     f.write(out)
 
-            with open(runSummaryFilename,"a") as f:
-                f.write('\n')
-                f.write('\t'.join([str(w) for w in self.w]+[str(self.SSE()),str(self.logLikelihood()),str(last10PerErr/last10PerCount)]))
+            #with open(runSummaryFilename,"a") as f:
+            #    f.write('\n')
+            #    f.write('\t'.join([str(w) for w in self.w]+[str(self.SSE()),str(self.logLikelihood()),str(last10PerErr/last10PerCount)]))
 
         with open(self.logFile,"a") as f:
             f.write('\n')
@@ -1619,13 +1627,15 @@ class Grammar:
 
     def predict(self,outputName="output.txt",newInputName = "newInput.txt"):
         # saving all tableau to output file
-        print("predicting")
+        if self.noisy:
+            print("predicting")
         obs, pred = self.predictAll()
         results = [t.toFile() for t in pred]
         #print(results)
         with open(outputName, 'w') as f:
             f.write('\n'.join(results))
-        print("Saving output predictions to "+Fore.CYAN+"output.txt"+Style.RESET_ALL)
+        if self.noisy:
+            print("Saving output predictions to "+Fore.CYAN+"output.txt"+Style.RESET_ALL)
 
         with open(newInputName,"w") as f:
             # print first line
@@ -2555,7 +2565,7 @@ class trainingData:
         self.sampler = []  # summed to 1, sampler for each learnData entry
         # derived from either obs.prob, or tab.prob*obs.prob, if tab.prob is present
 
-        self.noisy = True  # If true, will print out lots of junk as it reads in
+        self.noisy = False  # If true, will print out lots of junk as it reads in
         self.tableaux = []  # If candidates appear in the input file, this will contain tableaux, otherwise it will be empty
         self.tabProb = []  # a separate sampler for tableaux specifically, for use in simple tableau-based learning.
         self.tableauxTags = []  # tag of each tableau.  Should correspond to the 'input' column in the data

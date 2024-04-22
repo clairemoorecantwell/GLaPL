@@ -1,6 +1,6 @@
-trainingData: typeTokenInput_50
-outfolder: GLaPL_output
-label: 2_1_001_50___11
+trainingData: typeTokenInput_12pt5_diffMorph
+outfolder: /mnt/5F0E11952A224CAC/Gondolin/3_Projects_current/Type Frequency/GLaPL_output_Powell_diffMorph
+label: 2_0.7191073896516982_019244603383999848_12pt5_diffMorph___94
 weights: 0
 featureSet: hungarianFeatures
 addViolations: False
@@ -17,8 +17,8 @@ flip: False
 simpleListing: False
 pToList: 0.5
 nLexCs: 2
-pChangeIndexation: 0.01
-lexCStartW: 1
+pChangeIndexation: 0.19244603383999848
+lexCStartW: 0.7191073896516982
 locality: overlap
 first_index_strategy: lowest
 PFC_type: none

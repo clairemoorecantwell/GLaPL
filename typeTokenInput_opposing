@@ -1,4 +1,4 @@
-input	candidate		obs.prob	ku	fi
+input	candidate	obs.prob	tab.prob	ku	fi
 lugat_pl	lugat_ku	0	40	0	1
 lugat_pl	lugat_fi	1	40	1	0
 fudki_pl	fudki_ku	0	13	0	1
