@@ -1,5 +1,5 @@
 # training data filename
-trainingData: typeTokenInput_50
+trainingData: dutchinput
 
 # Folder to store output files in.  it will be created if it doesn't exist
 outfolder: GLaPL_output
@@ -12,7 +12,7 @@ label: uselisted_lowinput
 weights: 0
 
 # features file
-featureSet: hungarianFeatures
+featureSet: features.txt
 
 # add violations
 addViolations: False
@@ -52,7 +52,7 @@ useListedType: none
 # If you're sampling at a flat rate, what is the rate?
 # Make sure you always keep this one after the useListedType parameter
 # ignored if you're not using sample_flat_rate above
-useListedRate: 1
+useListedRate: 0.5
 
 # What to do with within-item variation?
 # If flip is True, just keep listing whatever correct output you heard on that trial
@@ -76,7 +76,7 @@ pToList: 0.05
 # Parameters for Lexical Indexation
 # Number of copies allowed of each constraint (use string "inf" to allow a maximum of one copy per lexical item)
 
-nLexCs: 24
+nLexCs: 10
 
 # Probability of changing a lexical item's indexation on error (rather than updating the weight of the indexed C)
 pChangeIndexation: .05

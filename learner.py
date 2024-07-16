@@ -11,6 +11,11 @@ import sys
 from colorama import Fore, Back, Style
 import importlib
 import datetime
+import os
+
+# create GLaPL_output folder if it doesn't exist
+if not os.path.exists('GLaPL_output'):
+    os.makedirs('GLaPL_output')
 
 class Features:
     def __init__(self, filename, skipChar='x'):
@@ -766,14 +771,15 @@ class Grammar:
             for line in f.readlines():
                 row += 1
                 line=line.strip()
-                if line.strip() and line[0]!="#":  #  Use hash as comment character in config file
+                if line.strip() and line[0] != "#":  #  Use hash as comment character in config file
                     param = [i.strip() for i in line.split(":")]
 
+                    # wrong config format
                     if len(param) != 2:
                         print(Fore.RED + "\nERROR: Row " + str(row) + " of " + config + " has the wrong number of entries.  It should have the form parameterName: parameterValue"+ Style.RESET_ALL)
                         exit()
 
-                    if param[0]=="trainingData":
+                    if param[0] == "trainingData":
                         if inputFile is None:
                             self.trainingDatafile = param[1]
                         else:
@@ -807,12 +813,16 @@ class Grammar:
                         else:
                             self.w = weights
 
-                    elif param[0]=="featureSet":
-                        self.featuresFileName=(param[1])
-                        try:
-                            self.featureSet = Features(param[1])
-                        except:
-                            print(Fore.RED +"\nERROR: Your feature set file, " + param[1] + " did not work."+ Style.RESET_ALL)
+                    elif param[0] == "featureSet":
+                        self.featuresFileName = (param[1])
+                        if (param[1]) == "none":
+                            self.featureSet = None
+                            print("\nWARNING: no feature set was specified. Learning will proceed without a feature set.")
+                        else:
+                            try:
+                                self.featureSet = Features(param[1])
+                            except:
+                                print(Fore.RED +"\nERROR: Your feature set file, " + param[1] + " did not work."+ Style.RESET_ALL)
 
                     elif param[0]=="addViolations":
                         try:
@@ -993,6 +1003,10 @@ class Grammar:
                         if self.lexC_type:
                             self.prepForLexC()
 
+                        # if both lexically-indexed constraints and listing are specified, throw warning
+                        if self.lexC_type and self.p_useListed > 0:
+                            print(Fore.CYAN + "\nWARNING: You've specified learning with lexically-indexed constraints and UR-listing. Learner will proceed using both." + Style.RESET_ALL)
+
                     elif param[0]=="pChangeIndexation":
                         try:
                             self.pChangeIndexation = float(param[1])
@@ -1074,9 +1088,12 @@ class Grammar:
 
         # check if all the parameters are there that should be
         print("Training from file: "+self.trainingDatafile)
-        print("Feature set: "+self.featuresFileName)
 
-
+        # input feature set is optional, so print if given
+        if self.featuresFileName != "none":
+            print("Feature set: " + self.featuresFileName)
+        else:
+            print("Feature set: none")
 
         try:
             if self.addViolations:
@@ -1120,6 +1137,8 @@ class Grammar:
     def prepForUselisted(self):
         UseListedIndex = None
 
+        print(Fore.GREEN + "\nReady to learn with UseListed." + Style.RESET_ALL)
+    
         # create a list of tuples pairing up plain and listed versions of each relevant constraint
         indexPairs = []
         toRemove = []
@@ -1146,11 +1165,11 @@ class Grammar:
             UseListedIndex = self.trainingData.constraintNames.index("UseListed")
             print("\n ...adding UseListed at index " + str(UseListedIndex))
 
-
         return indexPairs, toRemove, UseListedIndex
 
+
     def prepForLexC(self):
-        print("\nReady to learn with lexical indexation.  Maximum " + str(self.lexC_type) + " copies of each constraint.")
+        print(Fore.GREEN + "\nReady to learn with lexical indexation. " + Style.RESET_ALL + "Maximum " + str(self.lexC_type) + " copies of each constraint.")
         self.lexCs = [[0] for i in self.w]
         # create a vector for every constraint
         # go through the lexicon, add in index vectors
@@ -1625,7 +1644,7 @@ class Grammar:
         #print(results)
         with open(outputName, 'w') as f:
             f.write('\n'.join(results))
-        print("Saving output predictions to "+Fore.CYAN+"output.txt"+Style.RESET_ALL)
+        print("Saving output predictions to the " + Fore.CYAN + "GLaPL_output " + Style.RESET_ALL + "folder.")
 
         with open(newInputName,"w") as f:
             # print first line
