@@ -155,16 +155,18 @@ class candidate:
         except ValueError:
             print(
                 "It looks like candidate " + self.c + " has a probability that can't be converted to float.  Check if there's some text in that column of your spreadsheet")
-        self.harmony = 0  # Not specified at initialization.     This will be filled out in learning
-        self.predictedProb = 0  # Again, to be filled out during learning.
+        self.harmony = 0  # Not specified at initialization - this will be filled out in learning
+        self.predictedProb = 0  # to be filled out during learning
 
     def copy(self):
+        # create a copy of a candidate
         newC = candidate(self.c, self.violations[:], self.observedProb, self.surfaceForm)
         newC.harmony = self.harmony
         newC.predictedProb = self.predictedProb
         return newC
 
     def toRichCand(self, features):
+        # a rich candidate with features
         segsDict, segsList = features.stringToF(self.c)
         return richCand(self.c, self.violations[:], self.observedProb, segsDict, segsList, surfaceForm=self.surfaceForm)
 
@@ -217,6 +219,10 @@ class richCand(candidate):
         return 1
 
 
+########
+# Some example rich candidates...
+########
+
 def exampleCand():
     seg1 = [(0, "back"), (1, "high"), (1, "front"), (0, "low")]  # i
     seg2 = [(1, "back"), (1, "high"), (0, "front"), (0, "low")]  # u
@@ -226,7 +232,6 @@ def exampleCand():
     suprasegmentals = [(0, "stress1syll"), (1, "stress2syll"), (0, "stress3syll")]
     return richCand('iau', [1, 0, 1], 1, segs, order, suprasegmentals=suprasegmentals)
 
-
 def exampleCand22():
     seg1 = [(0, "back"), (1, "high"), (1, "front"), (0, "low")]  # i
     seg2 = [(1, "back"), (1, "high"), (0, "front"), (0, "low")]  # u
@@ -235,7 +240,6 @@ def exampleCand22():
     order = ["seg1", "seg2", "seg3"]
     suprasegmentals = [(0, "stress1syll"), (1, "stress2syll"), (0, "stress3syll")]
     return richCand('iau', [1, 0, 1], 1, segs, order, suprasegmentals=suprasegmentals)
-
 
 def exampleCandDup():
     seg1 = [(0, "back"), (1, "high"), (1, "front"), (0, "low")]  # i
@@ -250,7 +254,7 @@ def exampleCandDup():
 class Tableau:
     def __init__(self, tag, prob=1, hiddenStructure=False, lexemes=[], w=[], constraintNames=[]):
         self.tag = tag  # Human-readable tag to let the user know which tableau this is
-        self.prob = prob  # Corresponds to tab.prob in input file
+        self.prob = prob  # tab.prob in input file
         self.candidates = []  # To be filled during tableau creation
         self.faithCands = []  # 1 if the candidate is 'faithful', 0 otherwise
         self.probDenom = 1  # denominator for calculating MaxEnt prob of each candidate
@@ -268,8 +272,7 @@ class Tableau:
         self.lexemes = lexemes  # required for applyPFCs() and applyLexCs()
         self.w = w
         self.pfcIndex = len(self.w)
-        self.negCrossEntropy = 0  # Just for this tableau.  Can multiply by self.prob to get neg log likelihood
-        #print(self)
+        self.negCrossEntropy = 0  # Just for this tableau. Can multiply by self.prob to get neg log likelihood
 
     def __repr__(self):
         return "Tableau object '" + self.tag + "' with " + str(len(self.candidates)) + " candidates.  Winner: " + str(
@@ -277,7 +280,7 @@ class Tableau:
 
     def __str__(self):
         vform = '{:4s} '  # format function for tableau - increase number for more space between cells
-        if len(self.candidates)>0:
+        if len(self.candidates) > 0:
             longCand = max([len(i.c) for i in self.candidates])
             nViol = len(self.candidates[0].violations)
         else:
@@ -696,8 +699,6 @@ class Tableau:
                 print([cand.harmony for cand in self.candidates])
             self.predProbsList.append(cand.predictedProb)
 
-
-
     def getPredWinner(self, w=None, theory='MaxEnt'):
         ''' generates a predicted winner based on weights and theory'''
         # TODO add stochastic OT functionality here
@@ -756,6 +757,7 @@ class Tableau:
 
         return error, obsCandidate, predCandidate
 
+# TODO
 #sampleGrammar =
 
 class Grammar:
@@ -1005,7 +1007,7 @@ class Grammar:
 
                         # if both lexically-indexed constraints and listing are specified, throw warning
                         if self.lexC_type and self.p_useListed > 0:
-                            print(Fore.CYAN + "\nWARNING: You've specified learning with lexically-indexed constraints and UR-listing. Learner will proceed using both." + Style.RESET_ALL)
+                            print(Fore.CYAN + "\nWARNING: You've specified learning with indexed constraints and lexical listing. Learner will proceed using both." + Style.RESET_ALL)
 
                     elif param[0]=="pChangeIndexation":
                         try:
@@ -1163,7 +1165,7 @@ class Grammar:
             self.w.append(0)
             
             UseListedIndex = self.trainingData.constraintNames.index("UseListed")
-            print("\n ...adding UseListed at index " + str(UseListedIndex))
+            print("\n Adding the UseListed constraint at index " + str(UseListedIndex) + '.\n')
 
         return indexPairs, toRemove, UseListedIndex
 
@@ -1186,14 +1188,15 @@ class Grammar:
                 list(np.random.choice(range(0, len(self.trainingData.learnData)), n, p=self.trainingData.sampler))]
 
     def initializeWeights(self, w=None):
-        '''Function to initialize the weights - can take an argument, which is hopefully the same length as the number of constraints in the Tableaux object.  If it doesn't get that argument, it will initialize them to zero. '''
+        '''Function to initialize the weights - can take an argument, which is hopefully 
+        the same length as the number of constraints in the Tableaux object.  
+        If it doesn't get that argument, it will initialize them to zero. '''
         # TODO (low priority atm) Add functionality to initialize weights to random values
         # figure out how many constraints we have all together
         nC = len(self.trainingData.constraintNames) #+ (len(self.constraints) if self.constraints else 0)
-        #print(nC)
         if w is None:
             self.w = [0] * nC
-        elif w[0] =='random':
+        elif w[0] == 'random':
             upper = float(w[2])
             lower = float(w[1])
             self.w = [random.random()*(upper-lower)+lower]
@@ -1204,7 +1207,7 @@ class Grammar:
                 self.w = w
             else:
                 print("ERROR: you tried to initialize weights with a list of length ", len(w),
-                      ", but you have a total of ", nC, " constraints.  addViolations is set to ", self.addViolations)
+                      ", but you have a total of ", nC, " constraints. addViolations is set to ", self.addViolations)
             # This will print a warning, but it won't actually stop you from initializing constraints badly?  Maybe this is a problem that should be fixed.
 
     def calculate_sample_weights(self, frequencies):
@@ -1257,7 +1260,6 @@ class Grammar:
 
         # grab, create, or fill out the tableau
         tab = self.makeTableau(datum)
-
 
         # Predict an output and compare to observed
         e, obs, pred = tab.compareObsPred(tab.w,threshold=self.comparisonThreshold)
@@ -1698,17 +1700,17 @@ class Grammar:
                     f.write('\t'.join([str(l) for l in line]))
 
 
-    def makeTableau(self,datum,rich=False,testFcs=False):
-        '''Make the tableau for learning '''
+    def makeTableau(self, datum, rich=False, testFcs=False):
+        ''' Make the tableau for learning '''
         ''' datum is an entry in a traningData.learnData object'''
         ''' it has the form [[lexeme1, lexeme2,...], surface string, input string]'''
         ''' 'input string' is from the input column of the spreadsheet '''
 
         # can now call by index in trainingData.learnData, or by input
         # This is for manual calling mostly, to examine what makeTableau is really doing
-        if type(datum)==int:
+        if type(datum) == int:
             datum = self.trainingData.learnData[datum]
-        elif type(datum)==str:
+        elif type(datum) == str:
             for d in self.trainingData.learnData:
                 if d[2] == datum:  # third entry of each datum is the input string
                     datum = d 
@@ -1716,7 +1718,7 @@ class Grammar:
                            # The logic here is that all entries with the same input
                            # will yield basically the same tableau, and we don't want to hunt longer than necessary
                            # (esp if the trainingData is large!)
-            if type(datum)==str: # If we didn't find the string in inputs
+            if type(datum) == str: # If we didn't find the string in inputs
                 print("ERROR: input " + datum + " not found in g.trainingData.learnData")
                 return
 
@@ -1735,6 +1737,7 @@ class Grammar:
             else:
                 faiths = individualCands
 
+            # TODO
             # This is where you would put a scramble option
 
             # concatenate morphemes into faithful candidates
@@ -1767,6 +1770,7 @@ class Grammar:
 
             return fcs
 
+        # TODO
         # def generateCandidates(cands):  <- candidate generation goes here
 
 
@@ -1811,14 +1815,10 @@ class Grammar:
 
                 return tab
 
-
-
-
         obsOutput = datum[1] #second member of datum is the surface string observed for this set of lexemes
 
         if testFcs:
             return lexemesToFaithCands(datum)
-
 
 
     #####################################################
@@ -1848,67 +1848,70 @@ class Grammar:
         multipleInputs = 0
 
 
-
     ###################################################
     ### Calculate UseListed decisions
     ###################################################
         def useListedTabCreation():
+            # where the useListed constraint goes in the tableau
             useListedIndex = self.cPairs[2]
             #print("checking_p_uselisted")
             listing = 0
+
             # check if a listed form exists for this input
             listedTag = "_".join([i.tag for i in datum[0]]) if len(datum[0]) > 1 else False
             if listedTag in self.trainingData.lexicon:
                 # If the item has been listed at least once, look for other copies:
                 listedTagsList = [listedTag]
                 nCopies = 2
-                while listedTag+"_"+str(nCopies) in self.trainingData.lexicon:
-                    nCopies +=1
-                    listedTagsList.append(listedTag+"_"+str(nCopies))
+                while listedTag + "_" + str(nCopies) in self.trainingData.lexicon:
+                    nCopies += 1
+                    listedTagsList.append(listedTag + "_" + str(nCopies))
                 # set the official listed tag to a randomly selected one from the list
                 listedTag = random.choice(listedTagsList)
 
-                # Now, we check how we are doing UseListed
-                if self.p_useListed <= 1: # we sample completely randomly
+                #### Check which mode of useListed we're doing.
+                # If random sampling...
+                if self.p_useListed <= 1:
                     if random.random()< self.p_useListed:
                         listing = 1
-
-                elif self.p_useListed <= 2: # we sample based on frequency
+                # If sampling based on frequency
+                elif self.p_useListed <= 2:
                     f_composed = [lex.freq for lex in datum[0]]
                     f_listed = self.trainingData.lexicon[listedTag].freq
 
                     ####################################################
-                    # To change how the frequency sampling works edit here
+                    # To change how the frequency sampling works, edit here
                     ####################################################
                     local_p_useListed = f_listed / (f_listed + min(f_composed))
 
                     if random.random() < local_p_useListed:
                         listing = 1
 
-                else:  # we will return a hidden structure tableau
-                    #print("Making hidden structure tableau")
+                    ####################################################
+                    ####################################################
 
+                ## If hidden structure ...
+                else:
+                    print("\nMaking hidden structure tableau (else option)...")
+                    print(datum[0]) # i think this is the input
 
                     # Create list of faithful cands for composed
                     fcs_composed = lexemesToFaithCands(datum[0])
-
+                    print('Composed : ' + str(fcs_composed))
 
                     # Create list of faithful cands for listed
                     fcs_listed = lexemesToFaithCands([self.trainingData.lexicon[listedTag]])
-                    #print("fcs_listed")
-                    #print(fcs_listed)
+                    print('Listed : ' + str(fcs_listed))
 
-                    # merge tableaux, and  assign _composed vs. _listed violations correctly
-                    # self.cPairs is a tuple (list_of_pairs, reverse_sorted_indices_of_listed, UseListed violation index )
+                    # create tableaux for composed and listed
                     tab = assemble(fcs_composed)
                     tab_listed = assemble(fcs_listed)
                     #for cand in tab_listed.candidates:
                     #    cand.c = re.sub("_","",cand.c)
                     #print(tab_listed)
 
-
-
                     for pair in self.cPairs[0]:
+                        # cPairs[0] is a list of pairs
                         for cand in tab.candidates:
                             # set both columns equal to the _composed violation
                             cand.violations[pair[1]] = cand.violations[pair[0]]
@@ -1916,37 +1919,37 @@ class Grammar:
                             # set both columns equal to the _listed violation
                             cand.violations[pair[0]] = cand.violations[pair[1]]
 
+                    # cPairs[1] is reverse_sorted_indices_of_listed
+                    # Remove _composed violations
                     for i in self.cPairs[1]:
                         for cand in tab.candidates:
                             cand.violations.pop(i)
-                            # remove _listed violations
+                    # Remove _listed violations
                     for i in self.cPairs[1]:
                         for cand in tab_listed.candidates:
                             cand.violations.pop(i)
-                            # remove _listed violations
 
-                    # make sure all candidates have the right number of violations
-                    for cand in tab.candidates:
+                    # Make sure all candidates have the right number of violations
+                    for cand in tab.candidates: # _composed
                         nEmptyViolations = len(self.w)-len(cand.violations)
                         cand.violations += [0]*nEmptyViolations
-                    # make sure all candidates have the right number of violations
-                    for cand in tab_listed.candidates:
+                    for cand in tab_listed.candidates: #_listed
                         nEmptyViolations = len(self.w)-len(cand.violations)
                         cand.violations += [0]*nEmptyViolations
 
                     for cand in tab.candidates:
                         cand.violations[useListedIndex] = 1
-                        cand.c = cand.c+"_composed"
+                        cand.c = cand.c + "_composed"
                     for cand in tab_listed.candidates:
                         cand.violations[useListedIndex] = 0
-                        cand.c = cand.c+"_listed"
+                        cand.c = cand.c + "_listed"
 
-                    ## Now merge
-                    # first, get indices of candidates derived from non-listed lexemes
-                    composedCandIndices = list(range(0,len(tab.candidates)))
+                    ### Merge the _composed and _listed tableaus
+                    # Get indices of candidates derived from non-listed lexemes
+                    composedCandIndices = list(range(0, len(tab.candidates)))
                     for cand in tab_listed.candidates:
                         tab.candidates.append(cand)
-                    listedCandIndices = list(range(max(composedCandIndices)+1,len(tab.candidates)))
+                    listedCandIndices = list(range(max(composedCandIndices) + 1, len(tab.candidates)))
 
                     tab.hiddenStructure = True
                     multipleInputs = 1
@@ -1956,16 +1959,18 @@ class Grammar:
                     tab.lexemes = (urList,(composedCandIndices,listedCandIndices))
                     return tab
 
-
             #............................................#
             # If we didn't do a hidden structure tableau, we still need to make a tableau
             #............................................#
-            if listing: # we're using a listed complex form
+
+            # if using a listed complex form...
+            if listing:
+                print("\nDidn't do a hidden structure tableau before...")
                 datum[0] = [self.trainingData.lexicon[listedTag]]
 
                 # create a tableau
                 tab = assemble(lexemesToFaithCands(datum[0]))
-                tab.lexemes = datum[0][:]  #Note the lexemes that were used
+                tab.lexemes = datum[0][:]  # Note the lexemes that were used
 
                 # set _composed columns equal to _listed violations
                 # (later, we'll remove the _listed violations)
@@ -1977,6 +1982,7 @@ class Grammar:
                     for cand in tab.candidates:
                         cand.violations.pop(i)
                         # remove _listed violations
+                        # I think this is where you lose the other two candidates
 
                 # Assign UseListed violations (always 0)
                 # make sure all candidates have the right number of violations
@@ -1988,7 +1994,9 @@ class Grammar:
                     for cand in tab.candidates:
                         cand.violations[useListedIndex] = 0
 
-            elif not listedTag: # we've only got one morpheme
+            # if only one morpheme...
+            elif not listedTag:
+                # tableaus that only have one morpheme are fine.
                 tab = assemble(lexemesToFaithCands(datum[0]))
                 #print(tab)
                 tab.lexemes = datum[0][:]  #Note the lexemes that were used
@@ -2001,22 +2009,22 @@ class Grammar:
                     for pair in self.cPairs[0]:
                          cand.violations[pair[0]] = cand.violations[pair[1]]
  
+                # remove _listed violations
                 for i in self.cPairs[1]:
                     for cand in tab.candidates:
                         cand.violations.pop(i)
-                        # remove _listed violations
                         
-                # Assign UseListed violations (always 0)
                 # make sure all candidates have the right number of violations
                 for cand in tab.candidates:
-                    nEmptyViolations = len(self.w)-len(cand.violations)
-                    cand.violations += [0]*nEmptyViolations
+                    nEmptyViolations = len(self.w) - len(cand.violations)
+                    cand.violations += [0] * nEmptyViolations
 
+                # no uselisted violations if input is a single morpheme
                 if useListedIndex:
                     for cand in tab.candidates:
                         cand.violations[useListedIndex] = 0
 
-
+            ## WHAT IS THIS OTHER ALTERNATIVE??
             else:
                 tab = assemble(lexemesToFaithCands(datum[0]))
                 #print(tab)
@@ -2024,11 +2032,10 @@ class Grammar:
                 tab.lexemes = datum[0][:]  #Note the lexemes that were used
                 # create a tableau
 
-
+                # remove _listed violations
                 for i in self.cPairs[1]:
                     for cand in tab.candidates:
                         cand.violations.pop(i)
-                        # remove _listed violations
 
                 # make sure all candidates have the right number of violations
                 for cand in tab.candidates:
@@ -2041,6 +2048,7 @@ class Grammar:
                 if useListedIndex:
                     for cand in tab.candidates:
                         cand.violations[useListedIndex] = 1
+                # BUT HERE IT OCCURS AFTER WE REMOVE _LISTED VIOLATIONS
 
                 #print(tab)
 
@@ -2050,13 +2058,10 @@ class Grammar:
                 lex.lastSeen = self.t
                 lex.freq += 1
 
-
-
             return tab
             #...............................................#
             # Finished making the tableau
             #...............................................#
-
 
         if self.p_useListed:
                 tab = useListedTabCreation()
@@ -2067,8 +2072,8 @@ class Grammar:
 
 
       ########################################################################
-
-
+      ## LEXCS
+      ########################################################################
 
         #if self.URCs:
             # Look on each lexeme for URCs
@@ -2378,7 +2383,6 @@ class Grammar:
 
         return loglik
 
-
 class IteratedLearning:
     def __init__(self,startState,nEpochs,itPerEpoch,pause=False,folderName="iterated_learning_output"):
         self.startState = startState
@@ -2403,8 +2407,6 @@ class IteratedLearning:
             #    input("Press Enter to continue...")
 
             self.currentState = Grammar(self.startState.config,inputFile=newInputName)
-
-
 
 
 class lexeme:
@@ -2484,7 +2486,6 @@ class lexeme:
             a = [self.activitys[self.segLabels.index(i)] for i in c]
             rcs.append(richCand(''.join(c), [], 0, segsDict, segsList, activitys=a))
         return rcs
-
 
     def toFaithString(self):
         # A B C
@@ -2570,7 +2571,7 @@ class trainingData:
 
     def __init__(self, filename):
         self.lexicon = {}  # dictionary of {tag: lexeme}
-        self.learnData = []  # each entry is a list: [lexemes,surface,input].  lexemes is itself a list, of all lexemes involved in the entry
+        self.learnData = []  # each entry is a list: [lexemes, surface, input].  lexemes is itself a list, of all lexemes involved in the entry
         self.sampler = []  # summed to 1, sampler for each learnData entry
         # derived from either obs.prob, or tab.prob*obs.prob, if tab.prob is present
 
@@ -2626,7 +2627,7 @@ class trainingData:
             constraintsStartAt += 1
             if self.noisy:
                 print(Fore.CYAN +
-                    "\nYour input file contains input frequency information (it's the column labelled, somewhat opaquely, 'tab.prob')  Learning will therefore proceed according to this frequency-weighting. \n Note that you can turn off frequency weighting by... "+Style.RESET_ALL)  # TODO include note about how to turn off frequency weighting
+                    "\nYour input file contains input frequency information (it's the column labelled, somewhat opaquely, 'tab.prob')  Learning will therefore proceed according to this frequency-weighting. \nYou can turn off frequency weighting by... "+Style.RESET_ALL)  # TODO include note about how to turn off frequency weighting
         if 'lexeme' in header:
             specialLex = True
             lIndex = header.index('lexeme')
@@ -2768,7 +2769,6 @@ class trainingData:
     def decayLexemes(self):
         for lex in self.lexicon:
             self.lexicon[lex]
-
 
 
 def diffCands(cbase, cdiff,skipChar='x'):  # Use Damerau-Levenshtein distance, but with n features different as 'weights'
@@ -2913,6 +2913,9 @@ def distSegs(s1, s2):  # distance = n features that are different
         dist = "ERROR"
     return dist, s1_not_s2, s2_not_s1
 
+
+#########
+# Some example candidates for testing.
 
 def exampleCand2():
     seg1 = [(0, "back"), (1, "high"), (1, "front"), (0, "low")]  # i

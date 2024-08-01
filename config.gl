@@ -43,11 +43,11 @@ noisy: no
 
 ################
 # Parameters for UseListed
-# UseListed type  (choose one)
-#useListedType: hidden_structure
+# UseListed type (choose one)
+useListedType: hidden_structure
 #useListedType: sample_using_frequency
 #useListedType: sample_flat_rate
-useListedType: none
+#useListedType: none
 
 # If you're sampling at a flat rate, what is the rate?
 # Make sure you always keep this one after the useListedType parameter
@@ -76,7 +76,7 @@ pToList: 0.05
 # Parameters for Lexical Indexation
 # Number of copies allowed of each constraint (use string "inf" to allow a maximum of one copy per lexical item)
 
-nLexCs: 10
+nLexCs: 0
 
 # Probability of changing a lexical item's indexation on error (rather than updating the weight of the indexed C)
 pChangeIndexation: .05

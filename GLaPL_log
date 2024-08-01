@@ -1,2 +1,12 @@
 
 2024-07-16 13:46:33.155489	dutchinput	Id-Length	STW	*VVC	GLaPL_output	uselisted_lowinput	0	features.txt	False	Yine_syncope	False	['0.01', '0.01']	0.0	1.0	none	0	False	False	0.05	10.0	0.05	2.0	overlap	lowest	none	0.1	10.0	
+2024-07-29 10:16:26.429528	dutchinput	Id-Length	STW	*VVC	UseListed	GLaPL_output	uselisted_lowinput	0	features.txt	False	Yine_syncope	False	['0.01', '0.01']	0.0	1.0	none	0	False	False	0.05	0.0	0.05	2.0	overlap	lowest	none	0.1	10.0	
+2024-07-31 09:34:06.754334	dutchinput	Id-Length	STW	*VVC	UseListed	GLaPL_output	uselisted_lowinput	0	features.txt	False	Yine_syncope	False	['0.01', '0.01']	0.0	1.0	none	0	False	False	0.05	0.0	0.05	2.0	overlap	lowest	none	0.1	10.0	
+2024-07-31 10:03:16.823947	dutchinput	Id-Length	STW	*VVC	GLaPL_output	uselisted_lowinput	0	features.txt	False	Yine_syncope	False	['0.01', '0.01']	0.0	1.0	none	0	False	False	0.05	0.0	0.05	2.0	overlap	lowest	none	0.1	10.0	
+2024-07-31 10:07:09.878677	dutchinput	Id-Length	STW	*VVC	GLaPL_output	uselisted_lowinput	0	features.txt	False	Yine_syncope	False	['0.01', '0.01']	0.0	1.0	none	0	False	False	0.05	0.0	0.05	2.0	overlap	lowest	none	0.1	10.0	
+2024-08-01 09:39:01.675444	dutchinput	Id-Length	STW	*VVC	GLaPL_output	uselisted_lowinput	0	features.txt	False	Yine_syncope	False	['0.01', '0.01']	0.0	1.0	none	0	False	False	0.05	0.0	0.05	2.0	overlap	lowest	none	0.1	10.0	
+2024-08-01 09:39:47.667787	dutchinput	Id-Length	STW	*VVC	UseListed	GLaPL_output	uselisted_lowinput	0	features.txt	False	Yine_syncope	False	['0.01', '0.01']	0.0	1.0	hidden_structure	3	False	False	0.05	0.0	0.05	2.0	overlap	lowest	none	0.1	10.0	
+2024-08-01 10:13:58.648089	dutchinput	Id-Length	STW	*VVC	UseListed	GLaPL_output	uselisted_lowinput	0	features.txt	False	Yine_syncope	False	['0.01', '0.01']	0.0	1.0	hidden_structure	3	False	False	0.05	0.0	0.05	2.0	overlap	lowest	none	0.1	10.0	
+2024-08-01 10:15:31.083121	dutchinput	Id-Length	STW	*VVC	UseListed	GLaPL_output	uselisted_lowinput	0	features.txt	False	Yine_syncope	False	['0.01', '0.01']	0.0	1.0	hidden_structure	3	False	False	0.05	0.0	0.05	2.0	overlap	lowest	none	0.1	10.0	
+2024-08-01 10:16:04.377728	dutchinput	Id-Length	STW	*VVC	UseListed	GLaPL_output	uselisted_lowinput	0	features.txt	False	Yine_syncope	False	['0.01', '0.01']	0.0	1.0	hidden_structure	3	False	False	0.05	0.0	0.05	2.0	overlap	lowest	none	0.1	10.0	
+2024-08-01 10:18:10.617156	dutchinput	Id-Length	STW	*VVC	UseListed	GLaPL_output	uselisted_lowinput	0	features.txt	False	Yine_syncope	False	['0.01', '0.01']	0.0	1.0	hidden_structure	3	False	False	0.05	0.0	0.05	2.0	overlap	lowest	none	0.1	10.0	

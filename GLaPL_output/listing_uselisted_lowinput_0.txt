@@ -1,0 +1,7 @@
+lexemes 	 segments 	 listed_at_timestep
+poot_en	pooten	40
+glas_en	glaasen	408
+slot_en	slooten	566
+klas_en	klasen	814
+baas_en	baasen	862
+kip_en	kipen	3287
