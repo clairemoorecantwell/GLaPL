@@ -1,0 +1,273 @@
+# -*- coding: utf-8 -*-
+'''
+Created on Wed Oct 22 20:20:47 2025
+
+@author: moore-cantwell
+'''
+import tkinter as tk
+#from tkinter import *
+from tkinter import END, ttk
+from tkinter.messagebox import showinfo
+from tkinter import filedialog
+import re
+import learner as l
+import GLaPLUtilities as util
+
+
+root = tk.Tk()
+check_num_wrapper = (root.register(util.CheckNum),'%P')
+
+g = l.Grammar()
+
+def show_selected(values):
+    selected_options = []
+    for option, value in values.items():
+        if value.get() == 1:
+            selected_options.append(option)
+    print("Selected options:", selected_options)
+
+def CreateEntry(args):
+    for arg in args:
+        fieldLabel = ttk.Label(arg[0], text=arg[1])
+        fieldLabel.grid(column=arg[2], row=arg[3], sticky=arg[4])
+        fieldEntry = ttk.Entry(arg[0], textvariable=arg[5], validate='key', validatecommand=check_num_wrapper)
+        fieldEntry.grid(column=arg[2]+1, row=arg[3], sticky=arg[4])
+
+def CreateFrame(parent, maxColumn, columnspan, maxRow, column, row, sticky):
+    frame = ttk.Frame(parent, borderwidth=0, width=600, height=200)
+    maxColumn = 8
+    maxRow = 5
+    for i in range(maxColumn):
+        frame.columnconfigure(i, weight=1)
+    for i in range(maxRow):
+        frame.rowconfigure(i, weight=1)
+    frame.grid(column=column, row=row, columnspan=columnspan, sticky=sticky)
+    return frame
+
+def SettingsFrame(frame):
+    maxColumn = 1
+    maxRow = 5
+    for i in range(maxColumn):
+        frame.columnconfigure(i, weight=1)
+    for i in range(maxRow):
+        frame.rowconfigure(i, weight=1)
+
+    frame.grid(column=0, row=0, columnspan=3, rowspan=2, sticky='NSEW')
+
+    # CONTENT SETTINGS
+    sticky = 'NW'
+    contentSettingsFrame = ttk.Frame(frame, borderwidth=0, width=600, height=200)
+    maxColumn = 8
+    maxRow = 5
+    for i in range(maxColumn):
+        contentSettingsFrame.columnconfigure(i, weight=1)
+    for i in range(maxRow):
+        contentSettingsFrame.rowconfigure(i, weight=1)
+    contentSettingsFrame.grid(column=0, row=0, columnspan=3, sticky='NSEW')
+    
+    gridRow = 0
+    titleFrame = CreateFrame(parent=contentSettingsFrame, maxColumn=1, columnspan=8, maxRow=1, column=0, row=gridRow, sticky=sticky)
+    title = ttk.Label(contentSettingsFrame, anchor='nw', text='General Settings')
+    title.grid(column=0, row=gridRow)
+    
+    gridRow += 1
+    lRateFrame = CreateFrame(parent=contentSettingsFrame, maxColumn=8, columnspan= 8, maxRow=1, column=0, row=gridRow, sticky=sticky)
+    lRateNum = tk.StringVar()
+    lRateLable = ttk.Label(lRateFrame, text='Learning Rate')
+    lRateLable.grid(column=0, row=gridRow, sticky=sticky)
+    lRateField = ttk.Entry(lRateFrame, textvariable=lRateNum, validate='key', validatecommand=check_num_wrapper)
+    lRateField.grid(column=1, row=gridRow, sticky=sticky)
+    lRateField.bind('<Return>', lambda *args: g.setParam("learningRate",[float(lRateNum.get())]))
+    lRateDecreaseBool = False
+    lRateStartNum = tk.StringVar()
+    lRateEndNum = tk.StringVar()
+    lRateDecreaseCheckBox = tk.Checkbutton(lRateFrame, text="Decrease \nLearning Rate:", variable=lRateDecreaseBool, 
+                            command=lambda *args: CreateEntry([[lRateFrame,'Start', 3, gridRow, sticky, lRateStartNum], 
+                                                               [lRateFrame,'End', 5, gridRow, sticky, lRateEndNum]]))
+    lRateDecreaseCheckBox.grid(column=2, row=gridRow, sticky=sticky)
+
+    gridRow += 1
+    decayRateNum = tk.StringVar()
+    decayRate = ttk.Label(contentSettingsFrame, text='Decay Rate')
+    decayRate.grid(column=0, row=gridRow, sticky=sticky)
+    decayRateField = ttk.Entry(contentSettingsFrame, textvariable=decayRateNum, validate='key', validatecommand=check_num_wrapper)
+    decayRateField.grid(column=1, row=gridRow, sticky=sticky)
+    #decayRate.bind('<Return>', lambda *args: GetEntryValue(decayRateNum))
+    decayRateRadio = tk.StringVar()
+    decayOptions = {'L1' : 'L1',
+                    'L2' : 'L2',
+                    'Static' : 'Static',
+                    'No Decay' : 'NoDecay'}
+    decayColumn = 2
+    for (text, value) in decayOptions.items():
+        r = ttk.Radiobutton(
+            contentSettingsFrame,
+            text=text,
+            value=value,
+            variable=decayRateRadio
+            ).grid(column=decayColumn, row=gridRow, sticky=sticky)
+        decayColumn = decayColumn + 1
+    decayRateRadio.set('NoDecay')
+    ## BUTTON FOR TEST - comment out when we don't need it
+    button = ttk.Button(contentSettingsFrame, text='Get decayRate', command=lambda *args: util.ShowSelectedDecayRate(decayRateRadio)).grid(column=decayColumn + 1, row=gridRow)
+    
+    gridRow += 1
+    totalIterationsNum = tk.StringVar()
+    totalIterations = ttk.Label(contentSettingsFrame, text='Total Iterations')
+    totalIterations.grid(column=0, row=gridRow, sticky=sticky)
+    totalIterationsField = ttk.Entry(contentSettingsFrame, textvariable=totalIterationsNum, validate='key', validatecommand=check_num_wrapper)
+    totalIterationsField.grid(column=1, row=gridRow, sticky=sticky)
+    
+    gridRow += 1
+    epochsNum = tk.StringVar()
+    epochs = ttk.Label(contentSettingsFrame, text='Epochs')
+    epochs.grid(column=0, row=gridRow, sticky=sticky)
+    epochsField = ttk.Entry(contentSettingsFrame, textvariable=epochsNum, validate='key', validatecommand=check_num_wrapper)
+    epochsField.grid(column=1, row=gridRow, sticky=sticky)
+
+    #LISTING & INDEXATION
+    listing_indexationFrame = ttk.Frame(frame, borderwidth=0, width=600, height=200)
+    listing_indexationFrame.grid(column=0, row=1, columnspan=3, sticky=sticky)
+    maxColumn = 1
+    maxRow = 1
+    for i in range(maxColumn):
+        listing_indexationFrame.columnconfigure(i, weight=1)
+    for i in range(maxRow):
+        listing_indexationFrame.rowconfigure(i, weight=1)
+
+    gridRow = 0
+    notebook = ttk.Notebook(listing_indexationFrame)
+    notebook.grid(column=0, row=gridRow, sticky=sticky)
+
+    listingFrame = ttk.Frame(notebook, width=550, height=180)
+    listingFrame.grid(column=0, row=0, sticky=sticky)
+    indexationFrame = ttk.Frame(notebook, width=550, height=180)
+    indexationFrame.grid(column=0, row=0, sticky=sticky)
+
+    notebook.add(listingFrame, text='Listing')
+    notebook.add(indexationFrame, text='Indexation')
+
+
+
+    #DATA FILE SELECTION
+    gridRow = 0
+    folderFrame = ttk.Frame(frame, borderwidth=0, width=600, height=75)
+    folderFrame.grid(column=0, row=2, columnspan=3, sticky=sticky)
+    inputFolder = ttk.Label(folderFrame, text='Training Data File')
+    inputFolder.grid(column=0, row=gridRow, sticky=sticky)
+    message = tk.StringVar()
+    inputButton = tk.Button(folderFrame, width=15, text='Select File', command=lambda *args : readTrainingData(message)) 
+    inputButton.grid(column=1, row=gridRow, sticky=sticky)
+    inputMessage = ttk.Label(folderFrame, textvariable=message)
+    inputMessage.grid(column=2, row=gridRow, sticky=sticky)
+
+
+
+    gridRow += 1
+    outputFolder = ttk.Label(folderFrame, text='Output Folder')
+    outputFolder.grid(column=0, row=gridRow, sticky=sticky)
+    outputPath = tk.StringVar()
+    outputFolderButton = tk.Button(folderFrame, width=15, text='Select Folder', command=lambda *args : util.GetDirectory(outputPath)) 
+    outputFolderButton.grid(column=1, row=gridRow, sticky=sticky)
+    outputFolderName = ttk.Label(folderFrame, textvariable=outputPath)
+    outputFolderName.grid(column=2, row=gridRow, sticky=sticky)
+    #LEARN BUTTON
+    gridRow += 1
+    learnButton = tk.Button(folderFrame, width=15, text='Learn')
+    learnButton.place(anchor='center')
+    learnButton.grid(column=1, row=gridRow, pady=12)
+    
+    #SAVE SETTINGS
+    saveSettingsFrame = ttk.Frame(frame, borderwidth=0, width=600, height=200)
+    saveSettingsFrame.grid(column=0, row=4, columnspan=3, sticky=sticky)
+    maxColumn = 2
+    maxRow = 3
+    for i in range(maxColumn):
+        saveSettingsFrame.columnconfigure(i, weight=1)
+    for i in range(maxRow):
+        saveSettingsFrame.rowconfigure(i, weight=1)
+
+    gridRow = 0
+    saveSettingsLabel = ttk.Label(saveSettingsFrame, text='Save:')
+    saveSettingsLabel.grid(column=0, row=gridRow, sticky=sticky)
+
+    gridRow += 1
+    startRow = gridRow
+    gridColumn = 0
+    maxRows = 2
+    saveBoolsCol1 = {'Weights': tk.IntVar(), 
+                     'Error rates': tk.IntVar(), 
+                     'Tableaux': tk.IntVar(),
+                     'Indexation final state': tk.IntVar(), 
+                     'Indexed constraints weights over time (by constraint)': tk.IntVar(), 
+                     'Indexed constraints weights over time (by lexeme) -- LARGE FILE': tk.IntVar()
+                     }
+    for option, value in saveBoolsCol1.items():
+        check_button = tk.Checkbutton(saveSettingsFrame, text=option, variable=value, command=lambda *args: show_selected(saveBoolsCol1))
+        check_button.grid(column=gridColumn, row=gridRow, sticky=sticky)
+        gridRow += 1
+        if gridRow - startRow > maxRows:
+            gridRow = startRow
+            gridColumn += 1
+    
+def OutputFrame(frame):
+    frame.grid(column=3, row=0, columnspan=3, sticky='NSEW')
+
+def ConsoleFrame(frame):
+    frame.grid(column=3, row=1, columnspan=3, sticky='NSEW')
+
+def readTrainingData(m):
+    filename = filedialog.askopenfilename()
+    print(filename)
+    x = g.setParam("trainingData",filename)
+    m.set(x)
+
+# Setting some window properties
+root.title('GLaPL')
+root.configure(background='grey')
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+root.minsize(1280, 720)
+root.maxsize(screen_width, screen_height)
+root.geometry('300x300+50+50')
+
+# Root Grid
+content = ttk.Frame(root, padding=(12,12,12,12))
+settingsFrame = ttk.Frame(content, borderwidth=5, relief='ridge', width=640, height=720)
+outputFrame = ttk.Frame(content, borderwidth=5, relief='ridge', width=640, height=360)
+consoleFrame = ttk.Frame(content, borderwidth=5, relief='ridge', width=640, height=360)
+
+root.columnconfigure(0, weight=1)
+root.rowconfigure(0, weight=1)
+
+#Configuring columns and rows to scale with the window
+maxColumn = 6
+maxRow = 2
+for i in range(maxColumn):
+    content.columnconfigure(i, weight=1)
+for i in range(maxRow):
+    content.rowconfigure(i, weight=1)
+content.grid(column=0, row=0, sticky='NSEW')
+
+
+
+
+#Settings Frame:
+SettingsFrame(settingsFrame)
+
+#Output Frame:
+OutputFrame(outputFrame)
+
+#Console Frame:
+ConsoleFrame(consoleFrame)
+
+
+
+root.mainloop()
+
+#g = l.Grammar()
+
+### run to package as one file - takes longer to load, 
+### but easier to distribute
+### pyinstaller --onefile app.py
+
