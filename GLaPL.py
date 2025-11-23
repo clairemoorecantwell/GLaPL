@@ -10,6 +10,7 @@ from tkinter import END, Entry, Variable, ttk
 from tkinter.messagebox import showinfo
 from tkinter import filedialog
 import re
+from venv import create
 import learner as l
 import GLaPLUtilities as util
 
@@ -59,7 +60,8 @@ def CreateFrame(arg):
         frame.columnconfigure(i, weight=arg.weightx)
     for i in range(arg.maxRow):
         frame.rowconfigure(i, weight=arg.weighty)
-    frame.grid(column=arg.column, row=arg.row, columnspan=arg.columnSpan, rowspan=arg.rowSpan, sticky=arg.sticky, padx = arg.padx, pady=arg.pady, ipadx=arg.ipadx, ipady=arg.ipady)
+    frame.grid(column=arg.column, row=arg.row, columnspan=arg.columnSpan, rowspan=arg.rowSpan, sticky=arg.sticky, 
+               padx = arg.padx, pady=arg.pady, ipadx=arg.ipadx, ipady=arg.ipady)
     return frame
 def ToggleWeightsEntries(fieldList, active):
     for i in range(len(fieldList)):
@@ -112,32 +114,45 @@ def SettingsFrame(frame):
     maxRow = 10
     column = 0
     gridRow = 0
+    width = 680
     contentSettingsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=frame, maxColumn=maxColumn, columnSpan=3, 
-                                                                   maxRow=maxRow, column=column, row=gridRow, sticky='NSEW', pady = 5, height=680))
+                                                                   maxRow=maxRow, column=column, row=gridRow, sticky=sticky, pady = 5, height=680))
     sticky = 'NW'
-    maxColumn = 8
-    maxRow = 5
+    maxColumn = 1
+    maxRow = 1
     column = 0
     gridRow = 0
-    height = 120
-    settingsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= 8, maxRow=maxRow, 
-                               column=0, row=0, sticky=sticky, width=680, height=height))
+    height = 80
+    settingsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+                               column=0, row=0, sticky=sticky, width=width, height=height))
 
     settingsNotebook = ttk.Notebook(settingsFrame)
     settingsNotebook.grid(column=0, row=0, sticky=sticky)
     
-    generalCanvas = tk.Canvas(settingsFrame, width=680, height=height, scrollregion=(0,0,300,300))
-    generalFrame = CreateFrame(util.Tkinter_Field_Settings(parent=generalCanvas, maxColumn=maxColumn, columnSpan= 7, maxRow=maxRow, 
-                               column=0, row=0, sticky=sticky, width=680, height=height))
-    advancedFrame = CreateFrame(util.Tkinter_Field_Settings(parent=settingsFrame, maxColumn=maxColumn, columnSpan= 7, maxRow=maxRow, 
-                               column=0, row=0, sticky=sticky, width=680, height=height))
+    generalCanvas = tk.Canvas(settingsFrame, scrollregion=(0,0,100, 100))
+    generalCanvas.grid(column=0, row=0, sticky=sticky)
+
+    sticky = 'NW'
+    maxColumn = 8
+    maxRow = 1
+    column = 0
+    gridRow = 0
+    height = 0
+    sizex = 0
+    sizey = 0
+    settingsNotebook.identify(x= sizex, y= sizey)
+    generalFrame = CreateFrame(util.Tkinter_Field_Settings(parent=generalCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+                               column=0, row=0, sticky=sticky, width=sizex, height=sizey))
+    advancedFrame = CreateFrame(util.Tkinter_Field_Settings(parent=settingsFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+                               column=0, row=0, sticky=sticky, width=sizex, height=sizey))
 
     settingsNotebook.add(generalCanvas, text='General Settings')
     settingsNotebook.add(advancedFrame, text='Advanced Settings')
-    generalSettingsScroll = tk.Scrollbar(generalFrame,orient='vertical', command=generalCanvas.yview)
-    generalSettingsScroll.grid(column=maxColumn, rowspan=maxRow, sticky='NS')
+    generalSettingsScroll = tk.Scrollbar(contentSettingsFrame,orient='vertical')
+    generalSettingsScroll.config(command=generalCanvas.yview)
+    generalSettingsScroll.grid(column=maxColumn, row=0, sticky='NS')
     generalCanvas.config(yscrollcommand=generalSettingsScroll.set)
-    generalCanvas.create_window((0,0), window=generalFrame, anchor='nw')
+    generalCanvas.create_window((10,10), window=generalFrame, anchor='nw')
     generalFrame.bind("<Configure>", lambda event, canvas=generalCanvas: onFrameConfigure(canvas))
     sticky = 'NW'
     gridRow = 0
@@ -149,7 +164,7 @@ def SettingsFrame(frame):
 
     
 
-    gridRow += 1
+    # GENERAL SETTINGS:
     weightsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=generalFrame, maxColumn=5, maxRow=3, columnSpan=8, column=0, row=gridRow, sticky=sticky))
     weightsLabel = tk.Label(weightsFrame, anchor='nw', text='Starting Weights')
     weightsLabel.grid(column = 0, row=gridRow, sticky=sticky)
@@ -166,19 +181,21 @@ def SettingsFrame(frame):
     weightsRadioVar = tk.StringVar()
     weightsRadioList = []
     weightRadioCount = 0
+    rowCount = 0
     for (text, value) in weightsOptions.items():
         r = tk.Radiobutton(
             weightsFrame, text=text, value=value, variable=weightsRadioVar, command=lambda *args: SendParams('weights', weightsRadioVar, weightsVarList[weightRadioCount]))
         r.grid(column = 2, row=gridRow, sticky=sticky, padx=15)
         weightsRadioList.append(r)
         gridRow += 1
+        rowCount += 1
         weightRadioCount += 1
     weightsRadioVar.set('all')
     
     weightsRadioList[0].config(command=lambda *args: ToggleWeightsEntries(weightsEntryList, active=[0]))
     weightsRadioList[1].config(command=lambda *args: ToggleWeightsEntries(weightsEntryList, active=[1,2]))
     weightsRadioList[2].config(command=lambda *args: ToggleWeightsEntries(weightsEntryList, active=[3]))
-    gridRow -= 3
+    gridRow -= rowCount
     weightsEntryList = []
     weightsEntry = CreateEntry([util.Tkinter_Field_Settings(parent = weightsFrame, column = 3, row = gridRow, 
                                                           sticky = sticky, variable = weightSetAllNum, command = check_num_wrapper,
@@ -252,7 +269,23 @@ def SettingsFrame(frame):
     epochsEntry = CreateEntry([util.Tkinter_Field_Settings(parent=totalIterationsFrame, text='Epochs', column=0, row=gridRow, sticky=sticky, 
                                                               variable=epochsNum, command = check_num_wrapper)])
 
-    
+    #ADVANCED SETTINGS:
+    maxColumn = 3
+    maxRow = 1
+    advancedRow = 0
+    featureSetFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, maxRow=maxRow, 
+                                                                      column=0, row=advancedRow, sticky=sticky))
+    wrapLength=300
+    inputFile = tk.Label(featureSetFrame, text='Feature Set File')
+    inputFile.grid(column=0, row=gridRow, sticky=sticky)
+    message = tk.StringVar()
+    inputButton = tk.Button(featureSetFrame, width=15, text='Select File', command=lambda *args : readTrainingData(message)) 
+    inputButton.grid(column=1, row=gridRow, sticky=sticky)
+    inputMessage = tk.Label(featureSetFrame, textvariable=message, wraplength=wrapLength)
+    inputMessage.grid(column=2, row=gridRow, sticky=sticky)
+
+    advancedRow += 1
+
     #LISTING & INDEXATION
     gridRow = 1
     maxColumn = 1
@@ -286,8 +319,8 @@ def SettingsFrame(frame):
     # ttk.Frame(frame, borderwidth=0, width=600, height=75)
     # folderFrame.grid(column=0, row=2, columnspan=3, sticky=sticky)
     wrapLength=300
-    inputFolder = tk.Label(folderFrame, text='Training Data File')
-    inputFolder.grid(column=0, row=gridRow, sticky=sticky)
+    inputFile = tk.Label(folderFrame, text='Training Data File')
+    inputFile.grid(column=0, row=gridRow, sticky=sticky)
     message = tk.StringVar()
     inputButton = tk.Button(folderFrame, width=15, text='Select File', command=lambda *args : readTrainingData(message)) 
     inputButton.grid(column=1, row=gridRow, sticky=sticky)
