@@ -4,7 +4,10 @@ from tkinter import Variable, ttk
 from tkinter.messagebox import showinfo
 from tkinter import filedialog
 import re
+import learner as l
 from typing import NamedTuple
+
+g = l.Grammar()
 
 validChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', "."]
 
@@ -75,8 +78,14 @@ def ShowSelectedDecayRate(val):
     showinfo(title='DecayRate', message=val.get())
 
 def GetDirectory(value):
-    folder = filedialog.askdirectory()
+    folder = filedialog.askdirectory(initialdir= '.\\')
     value.set(folder)
+
+def readTrainingData(m):
+    filename = filedialog.askopenfilename(initialdir= '.\\')
+    print(filename)
+    x = g.setParam("trainingData",filename)
+    m.set(x)
 
 def GetFile(value):
     filename = filedialog.askopenfilename()

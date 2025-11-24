@@ -102,10 +102,24 @@ def SendParams(param, type, value, convertToFloats = False):
         value = value.split(",")
     g.setParam(param, [type, value])
 
-def onFrameConfigure(canvas):
+def onFrameConfigure(canvas, frame):
     '''Reset the scroll region to encompass the inner frame'''
-    canvas.configure(scrollregion=canvas.bbox("all"))
+    canvas.config(scrollregion=canvas.bbox("all"))
+    canvas.create_window((0,0), window=frame, anchor='nw')
 
+def onNotebookTabChange(nb, nbScrollbars):
+    print('tab ', nb.index('current'))
+    nbActiveTab = nb.index('current')
+    for i in range(len(nbScrollbars)):
+        if i != nbActiveTab:
+            print('hiding tab ', i, ' scrollbar: ', nbScrollbars[i])
+            #nbScrollbars[i].grid_remove()
+            nbScrollbars[i].grid_forget()
+        else:
+            print('restoring tab ', i, ' scrollbar: ', nbScrollbars[i])
+            #nbScrollbars[i].grid()
+            nbScrollbars[i].grid(column=8, row=0, sticky='NS')
+    
 def SettingsFrame(frame):
 
     # CONTENT SETTINGS
@@ -127,33 +141,59 @@ def SettingsFrame(frame):
                                column=0, row=0, sticky=sticky, width=width, height=height))
 
     settingsNotebook = ttk.Notebook(settingsFrame)
+    settingsNotebook.config(width=600, height=200)
     settingsNotebook.grid(column=0, row=0, sticky=sticky)
     
-    generalCanvas = tk.Canvas(settingsFrame, scrollregion=(0,0,100, 100))
-    generalCanvas.grid(column=0, row=0, sticky=sticky)
-
     sticky = 'NW'
     maxColumn = 8
     maxRow = 1
     column = 0
     gridRow = 0
-    height = 0
-    sizex = 0
-    sizey = 0
-    settingsNotebook.identify(x= sizex, y= sizey)
-    generalFrame = CreateFrame(util.Tkinter_Field_Settings(parent=generalCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
-                               column=0, row=0, sticky=sticky, width=sizex, height=sizey))
-    advancedFrame = CreateFrame(util.Tkinter_Field_Settings(parent=settingsFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
-                               column=0, row=0, sticky=sticky, width=sizex, height=sizey))
+    sizex = 600
+    sizey = 300
 
-    settingsNotebook.add(generalCanvas, text='General Settings')
-    settingsNotebook.add(advancedFrame, text='Advanced Settings')
-    generalSettingsScroll = tk.Scrollbar(contentSettingsFrame,orient='vertical')
+    
+    #Creating child frames
+    generalContentFrame = CreateFrame(util.Tkinter_Field_Settings(parent=settingsFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+                               column=0, row=0, sticky='NEW', width=sizex, height=sizey))
+    advancedContentFrame = CreateFrame(util.Tkinter_Field_Settings(parent=settingsFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+                               column=0, row=0, sticky='NEW', width=sizex, height=sizey))
+
+    #Creating canvases
+    generalCanvas = tk.Canvas(generalContentFrame, scrollregion=(0,0,600, 180))
+    generalCanvas.grid(column=0, row=0, sticky=sticky)
+    advancedCanvas = tk.Canvas(advancedContentFrame, scrollregion=(0,0,600, 180))
+    advancedCanvas.grid(column=0, row=0, sticky=sticky)
+
+    maxColumn -=1
+
+    #Creating frames that live inside the canvas
+    generalFrame = CreateFrame(util.Tkinter_Field_Settings(parent=generalCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+                               column=0, row=0, sticky='NEW', width=sizex, height=sizey))
+    advancedFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+                               column=0, row=0, sticky='NEW', width=sizex, height=sizey))
+    
+    #Adding notebook tabs
+    settingsNotebook.add(generalContentFrame, text='General Settings')
+    settingsNotebook.add(advancedContentFrame, text='Advanced Settings')
+    
+    generalSettingsScroll = tk.Scrollbar(generalContentFrame,orient='vertical')
     generalSettingsScroll.config(command=generalCanvas.yview)
-    generalSettingsScroll.grid(column=maxColumn, row=0, sticky='NS')
+    generalSettingsScroll.grid(column=8, row=0, sticky='NS')
     generalCanvas.config(yscrollcommand=generalSettingsScroll.set)
-    generalCanvas.create_window((10,10), window=generalFrame, anchor='nw')
-    generalFrame.bind("<Configure>", lambda event, canvas=generalCanvas: onFrameConfigure(canvas))
+    generalFrame.bind("<Configure>", lambda event, canvas=generalCanvas: onFrameConfigure(canvas, generalFrame))
+
+    advancedSettingsScroll = tk.Scrollbar(advancedContentFrame,orient='vertical')
+    advancedSettingsScroll.config(command=advancedCanvas.yview)
+    advancedSettingsScroll.grid(column=8, row=0, sticky='NS')
+    advancedCanvas.config(yscrollcommand=advancedSettingsScroll.set)
+    advancedFrame.bind("<Configure>", lambda event, canvas=advancedCanvas: onFrameConfigure(canvas, advancedFrame))
+    # nbScrollbars = [generalSettingsScroll, advancedSettingsScroll]
+
+    # notebookTabNum = settingsNotebook.bind('<<NotebookTabChanged>>', lambda event, 
+    #                                        nb = settingsNotebook: onNotebookTabChange(nb, nbScrollbars))
+    
+    
     sticky = 'NW'
     gridRow = 0
     
@@ -264,7 +304,7 @@ def SettingsFrame(frame):
                                                               variable=totalIterationsNum)])
 
     gridRow += 1
-    epochsNum = tk.StringVar()
+    epochsNum = tk.StringVar(value = g.epoch)
     epochsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=generalFrame, maxColumn=2, columnSpan= 8, maxRow=1, column=0, row=gridRow, sticky=sticky))
     epochsEntry = CreateEntry([util.Tkinter_Field_Settings(parent=totalIterationsFrame, text='Epochs', column=0, row=gridRow, sticky=sticky, 
                                                               variable=epochsNum, command = check_num_wrapper)])
@@ -273,16 +313,25 @@ def SettingsFrame(frame):
     maxColumn = 3
     maxRow = 1
     advancedRow = 0
-    featureSetFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, maxRow=maxRow, 
+
+    thresholdNum = tk.StringVar(value = g.comparisonThreshold)
+    thresholdFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
+                                                                      column=0, row=advancedRow, sticky=sticky))
+    thresholdEntry = CreateEntry([util.Tkinter_Field_Settings(parent=thresholdFrame, text='Threshold', column=1, row=advancedRow, sticky=sticky, 
+                                                              variable=thresholdNum, command = check_num_wrapper)])
+    thresholdEntry.bind('<Return>', lambda *args: g.setParam("threshold", float(thresholdNum.get())))
+    
+    advancedRow += 1
+    featureSetFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
                                                                       column=0, row=advancedRow, sticky=sticky))
     wrapLength=300
-    inputFile = tk.Label(featureSetFrame, text='Feature Set File')
-    inputFile.grid(column=0, row=gridRow, sticky=sticky)
-    message = tk.StringVar()
-    inputButton = tk.Button(featureSetFrame, width=15, text='Select File', command=lambda *args : readTrainingData(message)) 
-    inputButton.grid(column=1, row=gridRow, sticky=sticky)
-    inputMessage = tk.Label(featureSetFrame, textvariable=message, wraplength=wrapLength)
-    inputMessage.grid(column=2, row=gridRow, sticky=sticky)
+    featureInputFile = tk.Label(featureSetFrame, text='Feature Set File')
+    featureInputFile.grid(column=0, row=advancedRow, sticky=sticky)
+    featureMessage = tk.StringVar()
+    featureInputButton = tk.Button(featureSetFrame, width=15, text='Select File', command=lambda *args : util.readTrainingData(featureMessage)) 
+    featureInputButton.grid(column=1, row=advancedRow, sticky=sticky)
+    featureInputMessage = tk.Label(featureSetFrame, textvariable=featureMessage, wraplength=wrapLength)
+    featureInputMessage.grid(column=2, row=advancedRow, sticky=sticky)
 
     advancedRow += 1
 
@@ -294,6 +343,7 @@ def SettingsFrame(frame):
                                                                       column=0, row=gridRow, sticky=sticky))
 
     paramsNotebook = ttk.Notebook(listing_indexationFrame)
+    paramsNotebook.config(width=600, height=200)
     paramsNotebook.grid(column=0, row=0, sticky=sticky)
 
     listingFrame = CreateFrame(util.Tkinter_Field_Settings(parent=listing_indexationFrame, maxColumn=maxColumn, columnSpan= 8, maxRow=maxRow, 
@@ -322,7 +372,7 @@ def SettingsFrame(frame):
     inputFile = tk.Label(folderFrame, text='Training Data File')
     inputFile.grid(column=0, row=gridRow, sticky=sticky)
     message = tk.StringVar()
-    inputButton = tk.Button(folderFrame, width=15, text='Select File', command=lambda *args : readTrainingData(message)) 
+    inputButton = tk.Button(folderFrame, width=15, text='Select File', command=lambda *args : util.readTrainingData(message)) 
     inputButton.grid(column=1, row=gridRow, sticky=sticky)
     inputMessage = tk.Label(folderFrame, textvariable=message, wraplength=wrapLength)
     inputMessage.grid(column=2, row=gridRow, sticky=sticky)
@@ -396,11 +446,7 @@ def OutputFrame(frame):
 def ConsoleFrame(frame):
     frame.grid(column=3, row=1, columnspan=3, sticky='NSEW')
 
-def readTrainingData(m):
-    filename = filedialog.askopenfilename()
-    print(filename)
-    x = g.setParam("trainingData",filename)
-    m.set(x)
+
 
 # Setting some window properties
 root.title('GLaPL')
