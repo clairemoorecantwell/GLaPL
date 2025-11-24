@@ -11,6 +11,7 @@ from tkinter.messagebox import showinfo
 from tkinter import filedialog
 import re
 from venv import create
+import sys
 import learner as l
 import GLaPLUtilities as util
 
@@ -20,6 +21,8 @@ check_num_wrapper = (root.register(util.CheckNum),'%P')
 check_numList_wrapper = (root.register(util.CheckNumList),'%P')
 
 g = l.Grammar()
+
+platform = sys.platform
 
 def show_selected(values):
     selected_options = []
@@ -107,18 +110,40 @@ def onFrameConfigure(canvas, frame):
     canvas.config(scrollregion=canvas.bbox("all"))
     canvas.create_window((0,0), window=frame, anchor='nw')
 
-def onNotebookTabChange(nb, nbScrollbars):
-    print('tab ', nb.index('current'))
-    nbActiveTab = nb.index('current')
-    for i in range(len(nbScrollbars)):
-        if i != nbActiveTab:
-            print('hiding tab ', i, ' scrollbar: ', nbScrollbars[i])
-            #nbScrollbars[i].grid_remove()
-            nbScrollbars[i].grid_forget()
-        else:
-            print('restoring tab ', i, ' scrollbar: ', nbScrollbars[i])
-            #nbScrollbars[i].grid()
-            nbScrollbars[i].grid(column=8, row=0, sticky='NS')
+def boundToMouseWheel(canvas, event):
+    if platform == 'linux':
+        canvas.bind_all("<Button-4>", onMouseWheel)
+        canvas.bind_all("<Button-5>", onMouseWheel)
+    else:
+        canvas.bind_all("<MouseWheel>", onMouseWheel)
+
+def unboundToMouseWheel(canvas, event):
+    if platform == 'linux':
+        canvas.unbind_all("<Button-4>")
+        canvas.unbind_all("<Button-5>")
+    else:
+        canvas.unbind_all("<MouseWheel>")
+
+def onMouseWheel(canvas, event):
+    print(canvas)
+    print(event)
+    if platform == 'win32' or platform == 'cygwin' or platform == 'linux':
+        canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+    if platform == 'darwin':
+        canvas.yview_scroll(int(-1*(event.delta)), "units")
+
+# def onNotebookTabChange(nb, nbScrollbars):
+#     print('tab ', nb.index('current'))
+#     nbActiveTab = nb.index('current')
+#     for i in range(len(nbScrollbars)):
+#         if i != nbActiveTab:
+#             print('hiding tab ', i, ' scrollbar: ', nbScrollbars[i])
+#             #nbScrollbars[i].grid_remove()
+#             nbScrollbars[i].grid_forget()
+#         else:
+#             print('restoring tab ', i, ' scrollbar: ', nbScrollbars[i])
+#             #nbScrollbars[i].grid()
+#             nbScrollbars[i].grid(column=8, row=0, sticky='NS')
     
 def SettingsFrame(frame):
 
@@ -141,8 +166,10 @@ def SettingsFrame(frame):
                                column=0, row=0, sticky=sticky, width=width, height=height))
 
     settingsNotebook = ttk.Notebook(settingsFrame)
-    settingsNotebook.config(width=600, height=200)
-    settingsNotebook.grid(column=0, row=0, sticky=sticky)
+    settingsNotebook.pack(fill='both', expand=True)
+    settingsNotebook.pressed_index = None
+    # settingsNotebook.config(width=600, height=200)
+    # settingsNotebook.grid(column=0, row=0, sticky=sticky)
     
     sticky = 'NW'
     maxColumn = 8
@@ -154,45 +181,41 @@ def SettingsFrame(frame):
 
     
     #Creating child frames
-    generalContentFrame = CreateFrame(util.Tkinter_Field_Settings(parent=settingsFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
-                               column=0, row=0, sticky='NEW', width=sizex, height=sizey))
-    advancedContentFrame = CreateFrame(util.Tkinter_Field_Settings(parent=settingsFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
-                               column=0, row=0, sticky='NEW', width=sizex, height=sizey))
+    generalContentFrame = tk.Frame(master=settingsNotebook)
+    generalContentFrame.pack(fill='both', expand=True)
+
+    advancedContentFrame = tk.Frame(master=settingsNotebook)
+    advancedContentFrame.pack(fill='both', expand=True)
+
+    #Adding notebook tabs
+    settingsNotebook.add(generalContentFrame, text='General Settings')
+    settingsNotebook.add(advancedContentFrame, text='Advanced Settings')
 
     #Creating canvases
-    generalCanvas = tk.Canvas(generalContentFrame, scrollregion=(0,0,600, 180))
-    generalCanvas.grid(column=0, row=0, sticky=sticky)
-    advancedCanvas = tk.Canvas(advancedContentFrame, scrollregion=(0,0,600, 180))
-    advancedCanvas.grid(column=0, row=0, sticky=sticky)
+    generalCanvas = tk.Canvas(generalContentFrame, width=600, height=155)
+    generalScroll = tk.Scrollbar(generalContentFrame, command=generalCanvas.yview)
+    generalCanvas.config(yscrollcommand=generalScroll.set, scrollregion=(0,0,600, 300))
+    generalCanvas.pack(side='left', fill='both', expand=True)
+    generalScroll.pack(side='right', fill='y')
 
-    maxColumn -=1
+    advancedCanvas = tk.Canvas(advancedContentFrame, width=600, height=155)
+    advancedScroll = tk.Scrollbar(advancedContentFrame, command=advancedCanvas.yview)
+    advancedCanvas.config(yscrollcommand=advancedScroll.set, scrollregion=(0,0,600, 300))
+    advancedCanvas.pack(side='left', fill='both', expand=True)
+    advancedScroll.pack(side='right', fill='y')
 
     #Creating frames that live inside the canvas
     generalFrame = CreateFrame(util.Tkinter_Field_Settings(parent=generalCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=0, sticky='NEW', width=sizex, height=sizey))
+    # SOMEDAY GET MOUSEWHEEL SCROLLING WORKING
+    # generalFrame.bind('<Enter>', lambda event, canvas=generalCanvas: onMouseWheel(canvas, event=event))
+    generalCanvas.create_window(10, 10, anchor='nw', window=generalFrame)
+
     advancedFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=0, sticky='NEW', width=sizex, height=sizey))
-    
-    #Adding notebook tabs
-    settingsNotebook.add(generalContentFrame, text='General Settings')
-    settingsNotebook.add(advancedContentFrame, text='Advanced Settings')
-    
-    generalSettingsScroll = tk.Scrollbar(generalContentFrame,orient='vertical')
-    generalSettingsScroll.config(command=generalCanvas.yview)
-    generalSettingsScroll.grid(column=8, row=0, sticky='NS')
-    generalCanvas.config(yscrollcommand=generalSettingsScroll.set)
-    generalFrame.bind("<Configure>", lambda event, canvas=generalCanvas: onFrameConfigure(canvas, generalFrame))
-
-    advancedSettingsScroll = tk.Scrollbar(advancedContentFrame,orient='vertical')
-    advancedSettingsScroll.config(command=advancedCanvas.yview)
-    advancedSettingsScroll.grid(column=8, row=0, sticky='NS')
-    advancedCanvas.config(yscrollcommand=advancedSettingsScroll.set)
-    advancedFrame.bind("<Configure>", lambda event, canvas=advancedCanvas: onFrameConfigure(canvas, advancedFrame))
-    # nbScrollbars = [generalSettingsScroll, advancedSettingsScroll]
-
-    # notebookTabNum = settingsNotebook.bind('<<NotebookTabChanged>>', lambda event, 
-    #                                        nb = settingsNotebook: onNotebookTabChange(nb, nbScrollbars))
-    
+    # SOMEDAY GET MOUSEWHEEL SCROLLING WORKING
+    # advancedFrame.bind('<Enter>', lambda event, canvas=advancedCanvas: onMouseWheel(canvas, event=event))
+    advancedCanvas.create_window(10, 10, anchor='nw', window=advancedFrame)
     
     sticky = 'NW'
     gridRow = 0
