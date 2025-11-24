@@ -26,6 +26,34 @@ def CheckNum(newVal):
             return False
     return True
 
+def CheckNum0to1(newVal):
+    _decimal = False
+    _count = 0
+    _firstChar = 0
+    for char in newVal:
+        _count += 1
+        if _count > 15:
+            return False
+        if _count == 1 and char != '.' and (int(char) < 2):
+            _firstChar = int(char)
+            continue
+        if _count == 1 and char != '.' and (int(char) > 1):
+            return False
+        if _count == 1 and char == '.':
+            _decimal = True
+            _firstChar = char
+            continue
+        if _count == 2 and _firstChar != '.' and char != '.':
+            return False
+        if char == '.' and _decimal == True:
+            return False
+        if char == '.' and _decimal == False:
+            _decimal = True
+            continue
+        if char not in validChars:
+            return False
+    return True
+
 validListChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ".", ","]
 
 def CheckNumList(newVal):

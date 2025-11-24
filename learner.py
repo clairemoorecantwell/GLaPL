@@ -788,6 +788,7 @@ class Grammar:
         self.save_PFCs = False
         self.save_actualLexicon = False
 
+        self.useListedType = "none"
         self.p_useListed = 0
         self.useListedRate = 1.0
         self.flip = False
@@ -1026,6 +1027,7 @@ class Grammar:
         # LISTING PARAMETERS
         #string
         elif parameter == "useListedType":
+            print(value)
             self.useListedType = value
             if value=="hidden_structure":
                 self.p_useListed = 3
