@@ -81,11 +81,17 @@ def GetDirectory(value):
     folder = filedialog.askdirectory(initialdir= '.\\')
     value.set(folder)
 
-def readTrainingData(m):
+def ReadTrainingData(param, m):
     filename = filedialog.askopenfilename(initialdir= '.\\')
     print(filename)
-    x = g.setParam("trainingData",filename)
+    x = g.setParam(param,filename)
     m.set(x)
+
+def SendDictionary(param, dictionary):
+    newDict = {}
+    for key in dictionary:
+        newDict[key] = dictionary[key].get()
+    g.setParam(param, newDict)
 
 def GetFile(value):
     filename = filedialog.askopenfilename()
@@ -101,9 +107,9 @@ def FlipInt(value):
         print(value.get())
         return value
 
-def printOutput(value):
+def PrintOutput(value):
     print(value.get())
-def convertStringListToFloats(value):
+def ConvertStringListToFloats(value):
     x = value.split(",")
     return x
 

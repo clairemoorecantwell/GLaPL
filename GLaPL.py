@@ -42,9 +42,12 @@ def CreateEntry(args, b = None, fieldList = None, greyOut = None, fieldEntryList
     else:
         for arg in args:
             fieldLabel = tk.Label(arg.parent, text = arg.text, width = arg.labelWidth, anchor='nw')
-            fieldLabel.grid(column = arg.column, row = arg.row, sticky = arg.sticky, padx = arg.padx, ipadx = arg.ipadx, pady = arg.pady, ipady = arg.ipady)
-            fieldEntry = tk.Entry(arg.parent, textvariable = arg.variable, validate = 'key', validatecommand = arg.command, width = arg.entryWidth)
-            fieldEntry.grid(column = arg.column +1, row = arg.row, sticky = arg.sticky, padx = arg.padx, ipadx = arg.ipadx, pady = arg.pady, ipady = arg.ipady)
+            fieldLabel.grid(column = arg.column, row = arg.row, sticky = arg.sticky, padx = arg.padx, 
+                            ipadx = arg.ipadx, pady = arg.pady, ipady = arg.ipady)
+            fieldEntry = tk.Entry(arg.parent, textvariable = arg.variable, validate = 'key', 
+                                  validatecommand = arg.command, width = arg.entryWidth)
+            fieldEntry.grid(column = arg.column +1, row = arg.row, sticky = arg.sticky, padx = arg.padx, 
+                            ipadx = arg.ipadx, pady = arg.pady, ipady = arg.ipady)
             if fieldEntryList is not None:
                 if fieldEntry not in fieldEntryList:
                     fieldEntryList.append(fieldEntry)
@@ -176,9 +179,10 @@ def SettingsFrame(frame):
     maxRow = 1
     column = 0
     gridRow = 0
-    sizex = 600
+    sizex = 680
     sizey = 300
-
+    width = 630
+    height = 155
     
     #Creating child frames
     generalContentFrame = tk.Frame(master=settingsNotebook)
@@ -192,15 +196,15 @@ def SettingsFrame(frame):
     settingsNotebook.add(advancedContentFrame, text='Advanced Settings')
 
     #Creating canvases
-    generalCanvas = tk.Canvas(generalContentFrame, width=600, height=155)
+    generalCanvas = tk.Canvas(generalContentFrame, width=width, height=height)
     generalScroll = tk.Scrollbar(generalContentFrame, command=generalCanvas.yview)
-    generalCanvas.config(yscrollcommand=generalScroll.set, scrollregion=(0,0,600, 300))
+    generalCanvas.config(yscrollcommand=generalScroll.set, scrollregion=(0,0,width, 300))
     generalCanvas.pack(side='left', fill='both', expand=True)
     generalScroll.pack(side='right', fill='y')
 
-    advancedCanvas = tk.Canvas(advancedContentFrame, width=600, height=155)
+    advancedCanvas = tk.Canvas(advancedContentFrame, width=width, height=height)
     advancedScroll = tk.Scrollbar(advancedContentFrame, command=advancedCanvas.yview)
-    advancedCanvas.config(yscrollcommand=advancedScroll.set, scrollregion=(0,0,600, 300))
+    advancedCanvas.config(yscrollcommand=advancedScroll.set, scrollregion=(0,0,width, 300))
     advancedCanvas.pack(side='left', fill='both', expand=True)
     advancedScroll.pack(side='right', fill='y')
 
@@ -290,9 +294,11 @@ def SettingsFrame(frame):
     lRateEndNum = tk.StringVar()
     lRateFieldList = []
     lRateDecreaseCheckBox = tk.Checkbutton(lRateFrame, text="Decrease Learning Rate:", variable=lRateDecreaseBool, 
-                            command=lambda *args: CreateEntry([util.Tkinter_Field_Settings(parent = lRateFrame, text = 'Start', column = 3, row = gridRow, sticky = sticky, 
+                            command=lambda *args: CreateEntry([util.Tkinter_Field_Settings(parent = lRateFrame, text = 'Start', 
+                                                                                           column = 3, row = gridRow-4, sticky = sticky, 
                                                 variable = lRateStartNum, command = check_num_wrapper, entry = lRateEntry, labelWidth = 4), 
-                                                               util.Tkinter_Field_Settings(parent = lRateFrame, text = 'End', column = 5, row = gridRow, sticky = sticky, 
+                                                               util.Tkinter_Field_Settings(parent = lRateFrame, text = 'End', 
+                                                                                           column = 5, row = gridRow-4, sticky = sticky, 
                                                 variable = lRateEndNum, command = check_num_wrapper, entry = lRateEntry, labelWidth = 3)], 
                                                               lRateDecreaseBool.get(), lRateFieldList, lRateEntry))
     lRateDecreaseCheckBox.grid(column=2, row=gridRow, sticky=sticky, padx=15)
@@ -351,34 +357,141 @@ def SettingsFrame(frame):
     featureInputFile = tk.Label(featureSetFrame, text='Feature Set File')
     featureInputFile.grid(column=0, row=advancedRow, sticky=sticky)
     featureMessage = tk.StringVar()
-    featureInputButton = tk.Button(featureSetFrame, width=15, text='Select File', command=lambda *args : util.readTrainingData(featureMessage)) 
+    featureInputButton = tk.Button(featureSetFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('featureSet', featureMessage)) 
     featureInputButton.grid(column=1, row=advancedRow, sticky=sticky)
     featureInputMessage = tk.Label(featureSetFrame, textvariable=featureMessage, wraplength=wrapLength)
     featureInputMessage.grid(column=2, row=advancedRow, sticky=sticky)
 
     advancedRow += 1
+    genCandidatesFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
+                                                                      column=0, row=advancedRow, sticky=sticky))
+    genCandidatesBool = tk.BooleanVar()
+    genCandidatesBool.set(g.generateCandidates)
+    genCandidatesCheckBox = tk.Checkbutton(genCandidatesFrame, text="Generate Candidates:", variable=genCandidatesBool, 
+                                           command=lambda *args: g.setParam("generateCandidates", value=genCandidatesBool.get()))
+    genCandidatesCheckBox.grid(column=0, row=advancedRow, sticky=sticky)
+
+    advancedRow += 1
+    constraintsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
+                                                                      column=0, row=advancedRow, sticky=sticky))
+    constraintsInputFile = tk.Label(constraintsFrame, text='Constraints Set File')
+    constraintsInputFile.grid(column=0, row=advancedRow, sticky=sticky)
+    constraintsMessage = tk.StringVar()
+    constraintsInputButton = tk.Button(constraintsFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('constraints', constraintsMessage)) 
+    constraintsInputButton.grid(column=1, row=advancedRow, sticky=sticky)
+    constraintsInputMessage = tk.Label(constraintsFrame, textvariable=constraintsMessage, wraplength=wrapLength)
+    constraintsInputMessage.grid(column=2, row=advancedRow, sticky=sticky)
+
+    advancedRow += 1
+    addViolationsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
+                                                                      column=0, row=advancedRow, sticky=sticky))
+    addViolationsBool = tk.BooleanVar()
+    addViolationsBool.set(g.addViolations)
+    addViolationsCheckBox = tk.Checkbutton(addViolationsFrame, text="Add Violations:", variable=addViolationsBool, 
+                                           command=lambda *args: g.setParam("addViolations", value=addViolationsBool.get()))
+    addViolationsCheckBox.grid(column=0, row=advancedRow, sticky=sticky)
+
+    advancedRow += 1
+    verboseOutputFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
+                                                                      column=0, row=advancedRow, sticky=sticky))
+    verboseOutputBool = tk.BooleanVar()
+    verboseOutputBool.set(g.noisy)
+    verboseOutputCheckBox = tk.Checkbutton(verboseOutputFrame, text="Verbose Console Output:", variable=verboseOutputBool, 
+                                           command=lambda *args: g.setParam("noisy", value=verboseOutputBool.get()))
+    verboseOutputCheckBox.grid(column=0, row=advancedRow, sticky=sticky)
 
     #LISTING & INDEXATION
     gridRow = 1
     maxColumn = 1
     maxRow = 1
-    listing_indexationFrame = CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= 8, maxRow=maxRow, 
-                                                                      column=0, row=gridRow, sticky=sticky))
+    
+    sticky = 'NW'
+    maxColumn = 1
+    maxRow = 1
+    column = 0
+    gridRow = 2
+    height = 80
+    paramsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+                               column=0, row=gridRow, sticky=sticky, width=width, height=height))
 
-    paramsNotebook = ttk.Notebook(listing_indexationFrame)
-    paramsNotebook.config(width=600, height=200)
-    paramsNotebook.grid(column=0, row=0, sticky=sticky)
+    paramsNotebook = ttk.Notebook(paramsFrame)
+    paramsNotebook.pack(fill='both', expand=True)
+    paramsNotebook.pressed_index = None
+    
+    sticky = 'NW'
+    maxColumn = 8
+    maxRow = 1
+    column = 0
+    gridRow = 0
+    sizex = 680
+    sizey = 300
+    width = 630
+    height = 155
+    
+    #Creating child frames
+    listingContentFrame = tk.Frame(master=paramsNotebook)
+    listingContentFrame.pack(fill='both', expand=True)
 
-    listingFrame = CreateFrame(util.Tkinter_Field_Settings(parent=listing_indexationFrame, maxColumn=maxColumn, columnSpan= 8, maxRow=maxRow, 
-                               column=0, row=0, sticky=sticky, width=600, height=150))
-    indexationFrame = CreateFrame(util.Tkinter_Field_Settings(parent=listing_indexationFrame, maxColumn=maxColumn, columnSpan= 8, maxRow=maxRow, 
-                               column=0, row=0, sticky=sticky, width=600, height=150))
-    rstFrame = CreateFrame(util.Tkinter_Field_Settings(parent=listing_indexationFrame, maxColumn=maxColumn, columnSpan= 8, maxRow=maxRow, 
-                               column=0, row=0, sticky=sticky, width=600, height=150))
+    indexationContentFrame = tk.Frame(master=paramsNotebook)
+    indexationContentFrame.pack(fill='both', expand=True)
 
-    paramsNotebook.add(listingFrame, text='Listing')
-    paramsNotebook.add(indexationFrame, text='Indexation')
-    paramsNotebook.add(rstFrame, text='Representational Strength Theory')
+    rstContentFrame = tk.Frame(master=paramsNotebook)
+    rstContentFrame.pack(fill='both', expand=True)
+
+    #Adding notebook tabs
+    paramsNotebook.add(listingContentFrame, text='Listing')
+    paramsNotebook.add(indexationContentFrame, text='Indexation')
+    paramsNotebook.add(rstContentFrame, text='Representational Strength Theory')
+
+    #Creating canvases
+    listingCanvas = tk.Canvas(listingContentFrame, width=width, height=height)
+    listingScroll = tk.Scrollbar(listingContentFrame, command=listingCanvas.yview)
+    listingCanvas.config(yscrollcommand=listingScroll.set, scrollregion=(0,0,width, 300))
+    listingCanvas.pack(side='left', fill='both', expand=True)
+    listingScroll.pack(side='right', fill='y')
+
+    indexationCanvas = tk.Canvas(indexationContentFrame, width=width, height=height)
+    indexationScroll = tk.Scrollbar(indexationContentFrame, command=indexationCanvas.yview)
+    indexationCanvas.config(yscrollcommand=indexationScroll.set, scrollregion=(0,0,width, 300))
+    indexationCanvas.pack(side='left', fill='both', expand=True)
+    indexationScroll.pack(side='right', fill='y')
+
+    rstCanvas = tk.Canvas(rstContentFrame, width=width, height=height)
+    rstScroll = tk.Scrollbar(rstContentFrame, command=rstCanvas.yview)
+    rstCanvas.config(yscrollcommand=rstScroll.set, scrollregion=(0,0,width, 300))
+    rstCanvas.pack(side='left', fill='both', expand=True)
+    rstScroll.pack(side='right', fill='y')
+
+    #Creating frames that live inside the canvas
+    listingFrame = CreateFrame(util.Tkinter_Field_Settings(parent=listingCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+                               column=0, row=0, sticky='NEW', width=sizex, height=sizey))
+    # SOMEDAY GET MOUSEWHEEL SCROLLING WORKING
+    # listingFrame.bind('<Enter>', lambda event, canvas=listingCanvas: onMouseWheel(canvas, event=event))
+    listingCanvas.create_window(10, 10, anchor='nw', window=listingFrame)
+
+    indexationFrame = CreateFrame(util.Tkinter_Field_Settings(parent=indexationCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+                               column=0, row=0, sticky='NEW', width=sizex, height=sizey))
+    # SOMEDAY GET MOUSEWHEEL SCROLLING WORKING
+    # indexationFrame.bind('<Enter>', lambda event, canvas=indexationCanvas: onMouseWheel(canvas, event=event))
+    indexationCanvas.create_window(10, 10, anchor='nw', window=indexationFrame)
+
+    rstFrame = CreateFrame(util.Tkinter_Field_Settings(parent=rstCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+                               column=0, row=0, sticky='NEW', width=sizex, height=sizey))
+    # SOMEDAY GET MOUSEWHEEL SCROLLING WORKING
+    # rstFrame.bind('<Enter>', lambda event, canvas=rstCanvas: onMouseWheel(canvas, event=event))
+    rstCanvas.create_window(10, 10, anchor='nw', window=rstFrame)
+    
+    sticky = 'NW'
+    
+    #Listing Frame:
+
+
+
+    #Indexation Frame:
+
+
+
+    #rst Frame:
 
 
 
@@ -395,7 +508,7 @@ def SettingsFrame(frame):
     inputFile = tk.Label(folderFrame, text='Training Data File')
     inputFile.grid(column=0, row=gridRow, sticky=sticky)
     message = tk.StringVar()
-    inputButton = tk.Button(folderFrame, width=15, text='Select File', command=lambda *args : util.readTrainingData(message)) 
+    inputButton = tk.Button(folderFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('trainingData', message)) 
     inputButton.grid(column=1, row=gridRow, sticky=sticky)
     inputMessage = tk.Label(folderFrame, textvariable=message, wraplength=wrapLength)
     inputMessage.grid(column=2, row=gridRow, sticky=sticky)
@@ -426,18 +539,18 @@ def SettingsFrame(frame):
     startRow = saveRow
     gridColumn = 0
     maxRows = 2
-    saveTypesDict = {'Weights': tk.IntVar(), 
-                     'Error rates': tk.IntVar(), 
-                     'Tableaux': tk.IntVar(),
-                     'Indexation final state': tk.IntVar(), 
-                     'Indexed constraints weights over time (by constraint)': tk.IntVar(), 
-                     'Indexed constraints weights over time (by lexeme) -- LARGE FILE': tk.IntVar(),
-                     'Listing history': tk.IntVar(),
-                     'Phonological Form Constraints': tk.IntVar(),
-                     'Learned Lexicon': tk.IntVar()
+    saveTypesDict = {'Weights': tk.BooleanVar(value=g.save_weights), 
+                     'Error rates': tk.BooleanVar(value=g.save_errRates), 
+                     'Tableaux': tk.BooleanVar(value=g.save_tableaux),
+                     'Indexation final state': tk.BooleanVar(value=g.save_finalIndexation), 
+                     'Indexed constraints weights over time (by constraint)': tk.BooleanVar(value=g.save_indexedWeightsByConstraint), 
+                     'Indexed constraints weights over time (by lexeme) -- LARGE FILE': tk.BooleanVar(value=g.save_indexedWeightsByLexeme),
+                     'Listing history': tk.BooleanVar(value=g.save_listingHistory),
+                     'Phonological Form Constraints': tk.BooleanVar(value=g.save_PFCs),
+                     'Learned Lexicon': tk.BooleanVar(value=g.save_actualLexicon)
                      }
     for option, value in saveTypesDict.items():
-        check_button = tk.Checkbutton(saveSettingsFrame, text=option, variable=value, command=lambda *args: show_selected(saveTypesDict))
+        check_button = tk.Checkbutton(saveSettingsFrame, text=option, variable=value, command=lambda *args: util.SendDictionary('filesToSave',saveTypesDict))
         check_button.grid(column=gridColumn, row=saveRow, sticky=sticky)
         saveRow += 1
         if saveRow - startRow > maxRows:
@@ -446,14 +559,16 @@ def SettingsFrame(frame):
     
     #LEARN  & VALIDATE BUTTONS
     gridRow += 1
-    validateButton = tk.Button(contentSettingsFrame, width=15, text='Validate')
+    val_Learn_Frame = CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= 3, maxRow=maxRow, 
+                               column=0, row=gridRow, sticky=sticky, width=600, height=200))
+    validateButton = tk.Button(val_Learn_Frame, width=15, text='Validate')
     validateButton.place(anchor='center')
-    validateButton.grid(column=0, row=gridRow, pady=12)
+    validateButton.grid(column=0, row=gridRow, padx=12, pady=12, sticky=sticky)
     # collect all params and values in a dictionary and iterate through it and call setParam for each param / value pair
 
-    learnButton = tk.Button(contentSettingsFrame, width=15, text='Learn')
+    learnButton = tk.Button(val_Learn_Frame, width=15, text='Learn')
     learnButton.place(anchor='center')
-    learnButton.grid(column=2, row=gridRow, pady=12)
+    learnButton.grid(column=2, row=gridRow, padx=12, pady=12, sticky=sticky)
 
     # sample code for validating:
     # for i in entries:

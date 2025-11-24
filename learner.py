@@ -778,6 +778,7 @@ class Grammar:
         self.logFile = "GLaPL.txt"
         self.label = "glOutput"
         self.noisy = False
+        self.save_listingHistory = False
         self.save_tableaux = True
         self.save_errRates = True
         self.save_weights = True
@@ -998,7 +999,7 @@ class Grammar:
 
 
         # LEARNING REPORTING PARAMETERS
-        # advanced
+        # advanced 'verbose console output'
         elif parameter == "noisy":
             try:
                 self.noisy = eval(value)
@@ -1007,6 +1008,7 @@ class Grammar:
                 self.noisy = False
 
         elif parameter == "filesToSave":
+            print(value)
             try:
                 self.save_tableaux = value['Tableaux']
                 self.save_errRates = value['Error rates']
