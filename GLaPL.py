@@ -253,7 +253,8 @@ def SettingsFrame(frame):
     rowCount = 0
     for (text, value) in weightsOptions.items():
         r = tk.Radiobutton(
-            weightsFrame, text=text, value=value, variable=weightsRadioVar, command=lambda *args: SendParams('weights', weightsRadioVar, weightsVarList[weightRadioCount]))
+            weightsFrame, text=text, value=value, variable=weightsRadioVar, 
+            command=lambda *args: SendParams('weights', weightsRadioVar, weightsVarList[weightRadioCount]))
         r.grid(column = 2, row=nbRow, sticky=sticky, padx=15)
         weightsRadioList.append(r)
         nbRow += 1
@@ -428,7 +429,7 @@ def SettingsFrame(frame):
     sizex = 680
     sizey = 300
     width = 630
-    height = 155
+    height = 165
     
     #Creating child frames
     listingContentFrame = tk.Frame(master=paramsNotebook)
@@ -552,20 +553,124 @@ def SettingsFrame(frame):
     nLexCsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=indexationFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
     nLexCsNum = tk.StringVar(value=g.lexC_type)
-    nLexCsEntry = CreateEntry([util.Tkinter_Field_Settings(parent=nLexCsFrame, text='nLexCs', column=0, row=nbRow, sticky=sticky, 
+    nLexCsEntry = CreateEntry([util.Tkinter_Field_Settings(parent=nLexCsFrame, text='nLexCs', column=0, row=nbRow, 
+                                                           sticky=sticky, labelWidth=18, 
                                                               variable=nLexCsNum, command = check_num_wrapper)])
     nLexCsEntry.bind('<Return>', lambda *args: g.setParam('nLexCs', float(nLexCsNum.get())))
 
+    nbRow += 1
     pChangeIndexationFrame = CreateFrame(util.Tkinter_Field_Settings(parent=indexationFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
     pChangeIndexationNum = tk.StringVar(value=g.pChangeIndexation)
-    pChangeIndexationEntry = CreateEntry([util.Tkinter_Field_Settings(parent=pChangeIndexationFrame, text='pChangeIndexation', column=0, row=nbRow, sticky=sticky, 
+    pChangeIndexationEntry = CreateEntry([util.Tkinter_Field_Settings(parent=pChangeIndexationFrame, text='pChangeIndexation', column=0, 
+                                                                      row=nbRow, sticky=sticky, labelWidth=18, 
                                                               variable=pChangeIndexationNum, command = check_num_0to1_wrapper)])
     pChangeIndexationEntry.bind('<Return>', lambda *args: g.setParam('pChangeIndexation', float(pChangeIndexationNum.get())))
 
+    nbRow += 1
+    lexCStartWFrame = CreateFrame(util.Tkinter_Field_Settings(parent=indexationFrame, maxColumn=maxColumn, columnSpan= maxColumn, 
+                                                              maxRow=maxRow, column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
+    lexCStartWNum = tk.StringVar(value=g.lexCStartW)
+    lexCStartWEntry = CreateEntry([util.Tkinter_Field_Settings(parent=lexCStartWFrame, text='lexCStartW', column=0, row=nbRow, 
+                                                               sticky=sticky, labelWidth=18, 
+                                                              variable=lexCStartWNum, command = check_num_wrapper)])
+    lexCStartWEntry.bind('<Return>', lambda *args: g.setParam('lexCStartW', float(lexCStartWNum.get())))
+
+    nbRow += 1
+    localityFrame = CreateFrame(util.Tkinter_Field_Settings(parent=indexationFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+                               column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
+    localityLabel = tk.Label(localityFrame, anchor='nw', text='Locality:')
+    localityLabel.grid(column=0, row=nbRow, sticky = sticky)
+    localityRateRadio = tk.StringVar(value=g.localityRestrictionType)
+    localityRateRadioList = []
+    localityOptions = {'Overlap' : 'overlap',
+                    'Presence Only' : 'presence_only',
+                    'Strict' : 'strict'}
+    localityDescriptions = ['desc 1',
+                              'desc 2',
+                              'desc 3']
+    localityColumn = 1
+    row = nbRow
+    i = 0
+    for (text, value) in localityOptions.items():
+        r = tk.Radiobutton(
+            localityFrame, text=text, value=value, variable=localityRateRadio, command=lambda *args: g.setParam('locality', localityRateRadio.get()))
+        r.grid(column = localityColumn, row = row, sticky = sticky, padx = 15)
+        localityDescLabel = tk.Label(localityFrame, anchor='nw', text=localityDescriptions[i])
+        localityDescLabel.grid(column=localityColumn +1, row=row, sticky = sticky)
+        row += 1
+        i += 1
+    
+    ## FIRST INDEX STRAT NOT FULLY IMPLEMENTED YET
+    # nbRow += 1
+    # firstIndexStratFrame = CreateFrame(util.Tkinter_Field_Settings(parent=indexationFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    #                            column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
+    # firstIndexStratLabel = tk.Label(firstIndexStratFrame, anchor='nw', text='First Index Strat:')
+    # firstIndexStratLabel.grid(column=0, row=nbRow, sticky = sticky)
+    firstIndexStratRateRadio = tk.StringVar(value=g.firstIndexStrat)
+    # firstIndexStratRateRadioList = []
+    # #NEED OPTIONS
+    # firstIndexStratOptions = {'Lowest' : 'lowest'}
+    # firstIndexStratDescriptions = ['desc 1',
+    #                           'desc 2',
+    #                           'desc 3']
+    # firstIndexStratColumn = 1
+    # row = nbRow
+    # i = 0
+
+    # for (text, value) in firstIndexStratOptions.items():
+    #     r = tk.Radiobutton(
+    #         firstIndexStratFrame, text=text, value=value, variable=firstIndexStratRateRadio, command=lambda *args: g.setParam('first_index_strategy', firstIndexStratRateRadio.get()))
+    #     r.grid(column = firstIndexStratColumn, row = row, sticky = sticky, padx = 15)
+    #     firstIndexStratDescLabel = tk.Label(firstIndexStratFrame, anchor='nw', text=firstIndexStratDescriptions[i])
+    #     firstIndexStratDescLabel.grid(column=firstIndexStratColumn +1, row=row, sticky = sticky)
+    #     row += 1
+    #     i += 1
+    
     #rst Frame:
+    nbRow = 0
+    PFC_typeFrame = CreateFrame(util.Tkinter_Field_Settings(parent=rstFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+                               column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
+    PFC_typeLabel = tk.Label(PFC_typeFrame, anchor='nw', text='PFC Type:')
+    PFC_typeLabel.grid(column=0, row=nbRow, sticky = sticky)
+    PFC_typeRateRadio = tk.StringVar(value=g.PFC_type)
+    PFC_typeRateRadioList = []
+    PFC_typeOptions = {'None' : 'none',
+                    'Pseudo' : 'pseudo',
+                    'Full' : 'full'}
+    PFC_typeDescriptions = ['desc 1',
+                              'desc 2',
+                              'desc 3']
+    PFC_typeColumn = 1
+    row = nbRow
+    i = 0
 
+    for (text, value) in PFC_typeOptions.items():
+        r = tk.Radiobutton(
+            PFC_typeFrame, text=text, value=value, variable=PFC_typeRateRadio, command=lambda *args: g.setParam('PFC_type', PFC_typeRateRadio.get()))
+        r.grid(column = PFC_typeColumn, row = row, sticky = sticky, padx = 15)
+        PFC_typeDescLabel = tk.Label(PFC_typeFrame, anchor='nw', text=PFC_typeDescriptions[i])
+        PFC_typeDescLabel.grid(column=PFC_typeColumn +1, row=row, sticky = sticky)
+        row += 1
+        i += 1
+    
+    nbRow += 1
+    PFC_lrateFrame = CreateFrame(util.Tkinter_Field_Settings(parent=rstFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+                               column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
+    PFC_lrateNum = tk.StringVar(value=g.PFC_lrate)
+    PFC_lrateEntry = CreateEntry([util.Tkinter_Field_Settings(parent=PFC_lrateFrame, text='PFC Learning Rate', column=0, row=nbRow, 
+                                                              sticky=sticky, labelWidth=18, 
+                                                              variable=PFC_lrateNum, command = check_num_wrapper)])
+    PFC_lrateEntry.bind('<Return>', lambda *args: g.setParam('PFC_lrate', float(PFC_lrateNum.get())))
 
+    nbRow += 1
+    PFC_startWFrame = CreateFrame(util.Tkinter_Field_Settings(parent=rstFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+                               column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
+    PFC_startWNum = tk.StringVar(value=g.PFC_startW)
+    PFC_startWEntry = CreateEntry([util.Tkinter_Field_Settings(parent=PFC_startWFrame, text='PFC Starting Weight', column=0, row=nbRow, 
+                                                               sticky=sticky, labelWidth=18,
+                                                              variable=PFC_startWNum, command = check_num_wrapper)])
+    PFC_startWEntry.bind('<Return>', lambda *args: g.setParam('PFC_startW', float(PFC_startWNum.get())))
 
     #DATA FILE SELECTION
     gridRow += 1
@@ -633,6 +738,10 @@ def SettingsFrame(frame):
     gridRow += 1
     val_Learn_Frame = CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= 3, maxRow=maxRow, 
                                column=0, row=gridRow, sticky=sticky, width=600, height=200))
+    # validateDict = {
+    #     'weights': ,
+
+    #     }
     validateButton = tk.Button(val_Learn_Frame, width=15, text='Validate')
     validateButton.place(anchor='center')
     validateButton.grid(column=0, row=gridRow, padx=12, pady=12, sticky=sticky)

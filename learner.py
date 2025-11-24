@@ -1027,7 +1027,7 @@ class Grammar:
         # LISTING PARAMETERS
         #string
         elif parameter == "useListedType":
-            print(value)
+            print(parameter, ' ', value)
             self.useListedType = value
             if value=="hidden_structure":
                 self.p_useListed = 3
@@ -1043,6 +1043,7 @@ class Grammar:
 
         #float 0 - 1
         elif parameter == "useListedRate":
+            print(parameter, ' ', value)
             try:
                 self.useListedRate = float(value)
             except:
@@ -1050,6 +1051,7 @@ class Grammar:
                 self.p_useListed = 1
         #bool
         elif parameter == "flip":
+            print(parameter, ' ', value)
             try:
                 self.flip = eval(value)
             except:
@@ -1058,6 +1060,7 @@ class Grammar:
         
         #bool
         elif parameter == "simpleListing":
+            print(parameter, ' ', value)
             try:
                 self.simpleListing = eval(value)
             except:
@@ -1066,6 +1069,7 @@ class Grammar:
         
         #float 0-1
         elif parameter == "pToList":
+            print(parameter, ' ', value)
             try:
                 self.pToList = float(value)
             except:
@@ -1076,6 +1080,7 @@ class Grammar:
         # INDEXATION PARAMETERS
         # int
         elif parameter == "nLexCs":
+            print(parameter, ' ', value)
             try:
                 self.lexC_type = float(value)
             except:
@@ -1083,6 +1088,7 @@ class Grammar:
                 self.lexC_type = 0
         # float 0-1    
         elif parameter == "pChangeIndexation":
+            print(parameter, ' ', value)
             try:
                 self.pChangeIndexation = float(value)
             except:
@@ -1090,6 +1096,7 @@ class Grammar:
                 self.pChangeIndexation = 0.75
         # float
         elif parameter == "lexCStartW":
+            print(parameter, ' ', value)
             try:
                 self.lexCStartW = float(value)
             except:
@@ -1097,6 +1104,7 @@ class Grammar:
                 self.lexCStartW = 5.0
         # string - radioButton
         elif parameter == "locality":
+            print(parameter, ' ', value)
             try:
                 self.localityRestrictionType = value
             except:
@@ -1104,6 +1112,7 @@ class Grammar:
                 self.localityRestrictionType = "overlap"
         # string - radioButton
         elif parameter == "first_index_strategy":
+            print(parameter, ' ', value)
             try:
                 self.firstIndexStrat = value
             except:
@@ -1114,12 +1123,14 @@ class Grammar:
         # RST PARAMETERS
         # string - radioButton
         elif parameter == "PFC_type":
+            print(parameter, ' ', value)
             self.PFC_type = value
             if self.PFC_type not in ["none","pseudo","full"]:
                 return "WARNING PFC_type must be one of 'none', 'pseudo' or 'full'.  Using default value 'none', no PFCs."
                 self.PFC_type = "none"
         # float > 0
         elif parameter == "PFC_lrate":
+            print(parameter, ' ', value)
             try:
                 self.PFC_lrate = float(value)
             except:
@@ -1127,6 +1138,7 @@ class Grammar:
                 self.PFC_lrate = 0.1
         # float
         elif parameter == "PFC_startW":
+            print(parameter, ' ', value)
             try:
                 self.PFC_startW = float(value)
             except:
