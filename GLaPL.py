@@ -23,131 +23,6 @@ check_numList_wrapper = (root.register(util.CheckNumList),'%P')
 
 g = l.Grammar()
 
-platform = sys.platform
-
-def show_selected(values):
-    selected_options = []
-    for option, value in values.items():
-        if value.get() == 1:
-            selected_options.append(option)
-    print("Selected options:", selected_options)
-
-def CreateEntry(args, b = None, fieldList = None, greyOut = None, fieldEntryList = None):
-    if (b == 0):
-        i = len(fieldList) - 1
-        while i >= 0:
-            fieldList[i].destroy()
-            fieldList.remove(fieldList[i])
-            i = i - 1
-        greyOut.config(state = tk.NORMAL)
-    else:
-        for arg in args:
-            fieldLabel = tk.Label(arg.parent, text = arg.text, width = arg.labelWidth, anchor='nw')
-            fieldLabel.grid(column = arg.column, row = arg.row, sticky = arg.sticky, padx = arg.padx, 
-                            ipadx = arg.ipadx, pady = arg.pady, ipady = arg.ipady)
-            fieldEntry = tk.Entry(arg.parent, textvariable = arg.variable, validate = 'key', 
-                                  validatecommand = arg.command, width = arg.entryWidth)
-            fieldEntry.grid(column = arg.column +1, row = arg.row, sticky = arg.sticky, padx = arg.padx, 
-                            ipadx = arg.ipadx, pady = arg.pady, ipady = arg.ipady)
-            if fieldEntryList is not None:
-                if fieldEntry not in fieldEntryList:
-                    fieldEntryList.append(fieldEntry)
-            if fieldList is not None:
-                if fieldLabel not in fieldList:
-                    fieldList.append(fieldLabel)
-                if fieldEntry not in fieldList:
-                    fieldList.append(fieldEntry)
-        if greyOut is not None:
-            greyOut.config(state = tk.DISABLED, disabledbackground = 'grey')
-        return fieldEntry
-    
-def CreateFrame(arg):
-    frame = tk.Frame(arg.parent, borderwidth=arg.borderWidth, width=arg.width, height=arg.height, relief=arg.relief)
-    for i in range(arg.maxColumn):
-        frame.columnconfigure(i, weight=arg.weightx)
-    for i in range(arg.maxRow):
-        frame.rowconfigure(i, weight=arg.weighty)
-    frame.grid(column=arg.column, row=arg.row, columnspan=arg.columnSpan, rowspan=arg.rowSpan, sticky=arg.sticky, 
-               padx = arg.padx, pady=arg.pady, ipadx=arg.ipadx, ipady=arg.ipady)
-    return frame
-def ToggleWeightsEntries(fieldList, active):
-    for i in range(len(fieldList)):
-        if any(x == i for x in active):
-            fieldList[i].config(state = tk.NORMAL)
-        else:
-            fieldList[i].config(state = tk.DISABLED)
-#not used - removing the command line prevents setting a default, it's also not able to intelligently not send a list for the values.
-def CreateRadio_setParam(args, expandX = bool(True)):
-    listItem = 0
-    print(args)
-    column = args.column
-    row = args.row
-    parameter = args.parameter
-    _list = args.list
-    for (text, value) in args.dictionary.items():
-        print(text, value)
-        commandVariable=args.variable[listItem]
-        variable=args.radioVariable
-        r = tk.Radiobutton(
-            args.parent,
-            text=text,
-            value=value,
-            variable=variable,
-            command=lambda *args: g.setParam(parameter, [variable.get(), commandVariable]))
-        r.grid(column=column, row=row, sticky=args.sticky, padx = args.padx, pady=args.pady, ipadx = args.ipadx, ipady = args.ipady)
-        #find a solution for passing two variables through
-        if (len(args.variable) > 1):
-            listItem += 1
-        if (expandX == True):
-            column += 1
-        else:
-            row += 1
-        _list.append(r)
-
-def SendParams(param, type, value, convertToFloats = False):
-    if convertToFloats == True:
-        value = value.split(",")
-    g.setParam(param, [type, value])
-
-def onFrameConfigure(canvas, frame):
-    '''Reset the scroll region to encompass the inner frame'''
-    canvas.config(scrollregion=canvas.bbox("all"))
-    canvas.create_window((0,0), window=frame, anchor='nw')
-
-def boundToMouseWheel(canvas, event):
-    if platform == 'linux':
-        canvas.bind_all("<Button-4>", onMouseWheel)
-        canvas.bind_all("<Button-5>", onMouseWheel)
-    else:
-        canvas.bind_all("<MouseWheel>", onMouseWheel)
-
-def unboundToMouseWheel(canvas, event):
-    if platform == 'linux':
-        canvas.unbind_all("<Button-4>")
-        canvas.unbind_all("<Button-5>")
-    else:
-        canvas.unbind_all("<MouseWheel>")
-
-def onMouseWheel(canvas, event):
-    print(canvas)
-    print(event)
-    if platform == 'win32' or platform == 'cygwin' or platform == 'linux':
-        canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-    if platform == 'darwin':
-        canvas.yview_scroll(int(-1*(event.delta)), "units")
-
-# def onNotebookTabChange(nb, nbScrollbars):
-#     print('tab ', nb.index('current'))
-#     nbActiveTab = nb.index('current')
-#     for i in range(len(nbScrollbars)):
-#         if i != nbActiveTab:
-#             print('hiding tab ', i, ' scrollbar: ', nbScrollbars[i])
-#             #nbScrollbars[i].grid_remove()
-#             nbScrollbars[i].grid_forget()
-#         else:
-#             print('restoring tab ', i, ' scrollbar: ', nbScrollbars[i])
-#             #nbScrollbars[i].grid()
-#             nbScrollbars[i].grid(column=8, row=0, sticky='NS')
     
 def SettingsFrame(frame):
 
@@ -158,7 +33,7 @@ def SettingsFrame(frame):
     column = 0
     gridRow = 0
     width = 680
-    contentSettingsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=frame, maxColumn=maxColumn, columnSpan=3, 
+    contentSettingsFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=frame, maxColumn=maxColumn, columnSpan=3, 
                                                                    maxRow=maxRow, column=column, row=gridRow, sticky=sticky, pady = 5, height=680))
     sticky = 'NW'
     maxColumn = 1
@@ -166,7 +41,7 @@ def SettingsFrame(frame):
     column = 0
     gridRow = 0
     height = 80
-    settingsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    settingsFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=0, sticky=sticky, width=width, height=height))
 
     settingsNotebook = ttk.Notebook(settingsFrame)
@@ -210,31 +85,24 @@ def SettingsFrame(frame):
     advancedScroll.pack(side='right', fill='y')
 
     #Creating frames that live inside the canvas
-    generalFrame = CreateFrame(util.Tkinter_Field_Settings(parent=generalCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    generalFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=generalCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=0, sticky='NEW', width=sizex, height=sizey))
     # SOMEDAY GET MOUSEWHEEL SCROLLING WORKING
-    # generalFrame.bind('<Enter>', lambda event, canvas=generalCanvas: onMouseWheel(canvas, event=event))
+    # generalFrame.bind('<Enter>', lambda event, canvas=generalCanvas: util.onMouseWheel(canvas, event=event))
     generalCanvas.create_window(10, 10, anchor='nw', window=generalFrame)
 
-    advancedFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    advancedFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=advancedCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=0, sticky='NEW', width=sizex, height=sizey))
     # SOMEDAY GET MOUSEWHEEL SCROLLING WORKING
-    # advancedFrame.bind('<Enter>', lambda event, canvas=advancedCanvas: onMouseWheel(canvas, event=event))
+    # advancedFrame.bind('<Enter>', lambda event, canvas=advancedCanvas: util.onMouseWheel(canvas, event=event))
     advancedCanvas.create_window(10, 10, anchor='nw', window=advancedFrame)
     
     sticky = 'NW'
-    gridRow = 0
-    
-    # Starting weights should wind up as one of the following:
-    # ('all',0.0)  <- set all constraints to a specific weight
-    # ('rand',0.0,10.0)  <- randomize between 0 and 10
-    # ('setIndividually', [0.0,1.0,3.1,1.2,2.0]) <- set a start weight for each constraint
-
-    
+    gridRow = 0  
 
     # GENERAL SETTINGS:
     nbRow = 0
-    weightsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=generalFrame, maxColumn=5, maxRow=3, columnSpan=8, column=0, row=nbRow, sticky=sticky))
+    weightsFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=generalFrame, maxColumn=5, maxRow=3, columnSpan=8, column=0, row=nbRow, sticky=sticky))
     weightsLabel = tk.Label(weightsFrame, anchor='nw', text='Starting Weights')
     weightsLabel.grid(column = 0, row=nbRow, sticky=sticky)
     weightTypeRadio = tk.StringVar()
@@ -254,7 +122,7 @@ def SettingsFrame(frame):
     for (text, value) in weightsOptions.items():
         r = tk.Radiobutton(
             weightsFrame, text=text, value=value, variable=weightsRadioVar, 
-            command=lambda *args: SendParams('weights', weightsRadioVar, weightsVarList[weightRadioCount]))
+            command=lambda *args: util.SendParams('weights', weightsRadioVar, weightsVarList[weightRadioCount]))
         r.grid(column = 2, row=nbRow, sticky=sticky, padx=15)
         weightsRadioList.append(r)
         nbRow += 1
@@ -262,12 +130,12 @@ def SettingsFrame(frame):
         weightRadioCount += 1
     weightsRadioVar.set('all')
     
-    weightsRadioList[0].config(command=lambda *args: ToggleWeightsEntries(weightsEntryList, active=[0]))
-    weightsRadioList[1].config(command=lambda *args: ToggleWeightsEntries(weightsEntryList, active=[1,2]))
-    weightsRadioList[2].config(command=lambda *args: ToggleWeightsEntries(weightsEntryList, active=[3]))
+    weightsRadioList[0].config(command=lambda *args: util.ToggleWeightsEntries(weightsEntryList, active=[0]))
+    weightsRadioList[1].config(command=lambda *args: util.ToggleWeightsEntries(weightsEntryList, active=[1,2]))
+    weightsRadioList[2].config(command=lambda *args: util.ToggleWeightsEntries(weightsEntryList, active=[3]))
     nbRow -= rowCount
     weightsEntryList = []
-    weightsEntry = CreateEntry([util.Tkinter_Field_Settings(parent = weightsFrame, column = 3, row = nbRow, 
+    weightsEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent = weightsFrame, column = 3, row = nbRow, 
                                                           sticky = sticky, variable = weightSetAllNum, command = check_num_wrapper,
                                                           labelWidth = 0, entryWidth = 15),
                                 util.Tkinter_Field_Settings(parent = weightsFrame, column = 3, row = nbRow +1, 
@@ -282,13 +150,13 @@ def SettingsFrame(frame):
     weightsEntryList[0].bind('<Return>', lambda *args: g.setParam("weights",['all',float(weightSetAllNum.get())]))
     weightsEntryList[1].bind('<Return>', lambda *args: g.setParam("weights",['rand',float(weightsRandomMin.get()), float(weightsRandomMax.get())]))
     weightsEntryList[2].bind('<Return>', lambda *args: g.setParam("weights",['rand',float(weightsRandomMin.get()), float(weightsRandomMax.get())]))
-    weightsEntryList[3].bind('<Return>', lambda *args: SendParams(param='weights', type='setIndividually', value=weightsSetIndividually.get(), convertToFloats=True))
-    ToggleWeightsEntries(weightsEntryList, active=[0])
+    weightsEntryList[3].bind('<Return>', lambda *args: util.SendParams(param='weights', type='setIndividually', value=weightsSetIndividually.get(), convertToFloats=True))
+    util.ToggleWeightsEntries(weightsEntryList, active=[0])
 
     nbRow += 1
-    lRateFrame = CreateFrame(util.Tkinter_Field_Settings(parent=generalFrame, maxColumn=2, columnSpan= 8, maxRow=1, column=0, row=nbRow, sticky=sticky))
+    lRateFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=generalFrame, maxColumn=2, columnSpan= 8, maxRow=1, column=0, row=nbRow, sticky=sticky))
     lRateNum = tk.StringVar()
-    lRateEntry = CreateEntry([util.Tkinter_Field_Settings(parent = lRateFrame, text = 'Learning Rate', column = 0, row = nbRow, 
+    lRateEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent = lRateFrame, text = 'Learning Rate', column = 0, row = nbRow, 
                                                           sticky = sticky, variable = lRateNum, command = check_num_wrapper,
                                                           labelWidth = 12, entryWidth = 15)])
     lRateEntry.bind('<Return>', lambda *args: g.setParam("learningRate",[float(lRateNum.get())]))
@@ -297,19 +165,19 @@ def SettingsFrame(frame):
     lRateEndNum = tk.StringVar()
     lRateFieldList = []
     lRateDecreaseCheckBox = tk.Checkbutton(lRateFrame, text="Decrease Learning Rate:", variable=lRateDecreaseBool, 
-                            command=lambda *args: CreateEntry([util.Tkinter_Field_Settings(parent = lRateFrame, text = 'Start', 
-                                                                                           column = 3, row = nbRow-4, sticky = sticky, 
+                            command=lambda *args: util.CreateEntry([util.Tkinter_Field_Settings(parent = lRateFrame, text = 'Start', 
+                                                                                           column = 3, row = nbRow-1, sticky = sticky, 
                                                 variable = lRateStartNum, command = check_num_wrapper, entry = lRateEntry, labelWidth = 4), 
                                                                util.Tkinter_Field_Settings(parent = lRateFrame, text = 'End', 
-                                                                                           column = 5, row = nbRow-4, sticky = sticky, 
+                                                                                           column = 5, row = nbRow-1, sticky = sticky, 
                                                 variable = lRateEndNum, command = check_num_wrapper, entry = lRateEntry, labelWidth = 3)], 
                                                               lRateDecreaseBool.get(), lRateFieldList, lRateEntry))
     lRateDecreaseCheckBox.grid(column=2, row=nbRow, sticky=sticky, padx=15)
 
     nbRow += 1
-    decayRateFrame = CreateFrame(util.Tkinter_Field_Settings(parent=generalFrame, maxColumn=10, columnSpan= 8, maxRow=1, column=0, row=nbRow, sticky=sticky))
+    decayRateFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=generalFrame, maxColumn=10, columnSpan= 8, maxRow=1, column=0, row=nbRow, sticky=sticky))
     decayRateNum = tk.StringVar()
-    decayRateEntry = CreateEntry([util.Tkinter_Field_Settings(parent=decayRateFrame, text='Decay Rate', column=0, row=nbRow, sticky=sticky, 
+    decayRateEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=decayRateFrame, text='Decay Rate', column=0, row=nbRow, sticky=sticky, 
                                                               variable=decayRateNum, command=check_num_wrapper)])
     decayRateEntry.bind('<Return>', lambda *args: g.setParam("decayRate", float(decayRateNum.get())))
     decayRateRadio = tk.StringVar()
@@ -324,21 +192,21 @@ def SettingsFrame(frame):
             decayRateFrame, text=text, value=value, variable=decayRateRadio, command=lambda *args: g.setParam('decayType', decayRateRadio.get()))
         r.grid(column = decayColumn, row = nbRow, sticky = sticky, padx = 15)
         decayColumn += 1
-    # CreateRadio_setParam(util.Tkinter_Field_Settings(parent=decayRateFrame, dictionary=decayOptions, parameter='decayType', radioVariable=decayRateRadio, variableDefault='NoDecay', 
+    # util.CreateRadio_setParam(util.Tkinter_Field_Settings(parent=decayRateFrame, dictionary=decayOptions, parameter='decayType', radioVariable=decayRateRadio, variableDefault='NoDecay', 
     #                                                  variable=[decayRateNum], column=2, row=nbRow, sticky=sticky, padx=15, _list=decayRateRadioList))
     #decayRateRadioList[0].config(command=lambda *args: g.setParam('decayType','L1'))
     decayRateRadio.set('NoDecay')
 
     nbRow += 1
     totalIterationsNum = tk.StringVar()
-    totalIterationsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=generalFrame, maxColumn=2, columnSpan= 8, maxRow=1, column=0, row=nbRow, sticky=sticky))
-    totalIterationsEntry = CreateEntry([util.Tkinter_Field_Settings(parent=totalIterationsFrame, text='Total Iterations', column=0, row=nbRow, sticky=sticky, 
+    totalIterationsFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=generalFrame, maxColumn=2, columnSpan= 8, maxRow=1, column=0, row=nbRow, sticky=sticky))
+    totalIterationsEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=totalIterationsFrame, text='Total Iterations', column=0, row=nbRow, sticky=sticky, 
                                                               variable=totalIterationsNum)])
 
     nbRow += 1
     epochsNum = tk.StringVar(value = g.epoch)
-    epochsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=generalFrame, maxColumn=2, columnSpan= 8, maxRow=1, column=0, row=nbRow, sticky=sticky))
-    epochsEntry = CreateEntry([util.Tkinter_Field_Settings(parent=totalIterationsFrame, text='Epochs', column=0, row=nbRow, sticky=sticky, 
+    epochsFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=generalFrame, maxColumn=2, columnSpan= 8, maxRow=1, column=0, row=nbRow, sticky=sticky))
+    epochsEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=totalIterationsFrame, text='Epochs', column=0, row=nbRow, sticky=sticky, 
                                                               variable=epochsNum, command = check_num_wrapper)])
 
     #ADVANCED SETTINGS:
@@ -347,14 +215,14 @@ def SettingsFrame(frame):
     nbRow = 0
 
     thresholdNum = tk.StringVar(value = g.comparisonThreshold)
-    thresholdFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
+    thresholdFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
                                                                       column=0, row=nbRow, sticky=sticky))
-    thresholdEntry = CreateEntry([util.Tkinter_Field_Settings(parent=thresholdFrame, text='Threshold', column=1, row=nbRow, sticky=sticky, 
+    thresholdEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=thresholdFrame, text='Threshold', column=1, row=nbRow, sticky=sticky, 
                                                               variable=thresholdNum, command = check_num_wrapper)])
     thresholdEntry.bind('<Return>', lambda *args: g.setParam("threshold", float(thresholdNum.get())))
     
     nbRow += 1
-    featureSetFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
+    featureSetFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
                                                                       column=0, row=nbRow, sticky=sticky))
     wrapLength=300
     featureInputFile = tk.Label(featureSetFrame, text='Feature Set File')
@@ -366,7 +234,7 @@ def SettingsFrame(frame):
     featureInputMessage.grid(column=2, row=nbRow, sticky=sticky)
 
     nbRow += 1
-    genCandidatesFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
+    genCandidatesFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
                                                                       column=0, row=nbRow, sticky=sticky))
     genCandidatesBool = tk.BooleanVar()
     genCandidatesBool.set(g.generateCandidates)
@@ -375,7 +243,7 @@ def SettingsFrame(frame):
     genCandidatesCheckBox.grid(column=0, row=nbRow, sticky=sticky)
 
     nbRow += 1
-    constraintsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
+    constraintsFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
                                                                       column=0, row=nbRow, sticky=sticky))
     constraintsInputFile = tk.Label(constraintsFrame, text='Constraints Set File')
     constraintsInputFile.grid(column=0, row=nbRow, sticky=sticky)
@@ -386,7 +254,7 @@ def SettingsFrame(frame):
     constraintsInputMessage.grid(column=2, row=nbRow, sticky=sticky)
 
     nbRow += 1
-    addViolationsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
+    addViolationsFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
                                                                       column=0, row=nbRow, sticky=sticky))
     addViolationsBool = tk.BooleanVar()
     addViolationsBool.set(g.addViolations)
@@ -395,7 +263,7 @@ def SettingsFrame(frame):
     addViolationsCheckBox.grid(column=0, row=nbRow, sticky=sticky)
 
     nbRow += 1
-    verboseOutputFrame = CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
+    verboseOutputFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
                                                                       column=0, row=nbRow, sticky=sticky))
     verboseOutputBool = tk.BooleanVar()
     verboseOutputBool.set(g.noisy)
@@ -414,7 +282,7 @@ def SettingsFrame(frame):
     column = 0
     gridRow = 2
     height = 80
-    paramsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    paramsFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=gridRow, sticky=sticky, width=width, height=height))
 
     paramsNotebook = ttk.Notebook(paramsFrame)
@@ -466,29 +334,29 @@ def SettingsFrame(frame):
     rstScroll.pack(side='right', fill='y')
 
     #Creating frames that live inside the canvas
-    listingFrame = CreateFrame(util.Tkinter_Field_Settings(parent=listingCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    listingFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=listingCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=0, sticky='NEW', width=sizex, height=sizey))
     # SOMEDAY GET MOUSEWHEEL SCROLLING WORKING
-    # listingFrame.bind('<Enter>', lambda event, canvas=listingCanvas: onMouseWheel(canvas, event=event))
+    # listingFrame.bind('<Enter>', lambda event, canvas=listingCanvas: util.onMouseWheel(canvas, event=event))
     listingCanvas.create_window(10, 10, anchor='nw', window=listingFrame)
 
-    indexationFrame = CreateFrame(util.Tkinter_Field_Settings(parent=indexationCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    indexationFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=indexationCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=0, sticky='NEW', width=sizex, height=sizey))
     # SOMEDAY GET MOUSEWHEEL SCROLLING WORKING
-    # indexationFrame.bind('<Enter>', lambda event, canvas=indexationCanvas: onMouseWheel(canvas, event=event))
+    # indexationFrame.bind('<Enter>', lambda event, canvas=indexationCanvas: util.onMouseWheel(canvas, event=event))
     indexationCanvas.create_window(10, 10, anchor='nw', window=indexationFrame)
 
-    rstFrame = CreateFrame(util.Tkinter_Field_Settings(parent=rstCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    rstFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=rstCanvas, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=0, sticky='NEW', width=sizex, height=sizey))
     # SOMEDAY GET MOUSEWHEEL SCROLLING WORKING
-    # rstFrame.bind('<Enter>', lambda event, canvas=rstCanvas: onMouseWheel(canvas, event=event))
+    # rstFrame.bind('<Enter>', lambda event, canvas=rstCanvas: util.onMouseWheel(canvas, event=event))
     rstCanvas.create_window(10, 10, anchor='nw', window=rstFrame)
     
     sticky = 'NW'
     
     #Listing Frame:
     nbRow = 0
-    listingTypeFrame = CreateFrame(util.Tkinter_Field_Settings(parent=listingFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    listingTypeFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=listingFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
     listedLabel = tk.Label(listingTypeFrame, anchor='nw', text='Listed Type:')
     listedLabel.grid(column=0, row=nbRow, sticky = sticky)
@@ -515,15 +383,15 @@ def SettingsFrame(frame):
         i += 1
 
     nbRow += row
-    listingRateFrame = CreateFrame(util.Tkinter_Field_Settings(parent=listingFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    listingRateFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=listingFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
     listedRateNum = tk.StringVar(value=g.useListedRate)
-    listedRateEntry = CreateEntry([util.Tkinter_Field_Settings(parent=listingRateFrame, text='Listed Rate', column=0, row=nbRow, sticky=sticky, 
+    listedRateEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=listingRateFrame, text='Listed Rate', column=0, row=nbRow, sticky=sticky, 
                                                               variable=listedRateNum, command = check_num_0to1_wrapper)])
     listedRateEntry.bind('<Return>', lambda *args: g.setParam('useListedRate', float(listedRateNum.get())))
 
     nbRow += 1
-    flipFrame = CreateFrame(util.Tkinter_Field_Settings(parent=listingFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    flipFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=listingFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
     flipBool = tk.BooleanVar()
     flipBool.set(g.flip)
@@ -532,7 +400,7 @@ def SettingsFrame(frame):
     flipCheckBox.grid(column=0, row=nbRow, sticky=sticky)
 
     nbRow += 1
-    simpleListingFrame = CreateFrame(util.Tkinter_Field_Settings(parent=listingFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    simpleListingFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=listingFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
     simpleListingBool = tk.BooleanVar()
     simpleListingBool.set(g.simpleListing)
@@ -541,43 +409,43 @@ def SettingsFrame(frame):
     simpleListingCheckBox.grid(column=0, row=nbRow, sticky=sticky)
 
     nbRow += 1
-    pToListFrame = CreateFrame(util.Tkinter_Field_Settings(parent=listingFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    pToListFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=listingFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
     pToListNum = tk.StringVar(value=g.pToList)
-    pToListEntry = CreateEntry([util.Tkinter_Field_Settings(parent=pToListFrame, text='pToList', column=0, row=nbRow, sticky=sticky, 
+    pToListEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=pToListFrame, text='pToList', column=0, row=nbRow, sticky=sticky, 
                                                               variable=pToListNum, command = check_num_0to1_wrapper)])
     pToListEntry.bind('<Return>', lambda *args: g.setParam('pToList', float(pToListNum.get())))
 
     #Indexation Frame:
     nbRow = 0
-    nLexCsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=indexationFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    nLexCsFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=indexationFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
     nLexCsNum = tk.StringVar(value=g.lexC_type)
-    nLexCsEntry = CreateEntry([util.Tkinter_Field_Settings(parent=nLexCsFrame, text='nLexCs', column=0, row=nbRow, 
+    nLexCsEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=nLexCsFrame, text='nLexCs', column=0, row=nbRow, 
                                                            sticky=sticky, labelWidth=18, 
                                                               variable=nLexCsNum, command = check_num_wrapper)])
     nLexCsEntry.bind('<Return>', lambda *args: g.setParam('nLexCs', float(nLexCsNum.get())))
 
     nbRow += 1
-    pChangeIndexationFrame = CreateFrame(util.Tkinter_Field_Settings(parent=indexationFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    pChangeIndexationFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=indexationFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
     pChangeIndexationNum = tk.StringVar(value=g.pChangeIndexation)
-    pChangeIndexationEntry = CreateEntry([util.Tkinter_Field_Settings(parent=pChangeIndexationFrame, text='pChangeIndexation', column=0, 
+    pChangeIndexationEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=pChangeIndexationFrame, text='pChangeIndexation', column=0, 
                                                                       row=nbRow, sticky=sticky, labelWidth=18, 
                                                               variable=pChangeIndexationNum, command = check_num_0to1_wrapper)])
     pChangeIndexationEntry.bind('<Return>', lambda *args: g.setParam('pChangeIndexation', float(pChangeIndexationNum.get())))
 
     nbRow += 1
-    lexCStartWFrame = CreateFrame(util.Tkinter_Field_Settings(parent=indexationFrame, maxColumn=maxColumn, columnSpan= maxColumn, 
+    lexCStartWFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=indexationFrame, maxColumn=maxColumn, columnSpan= maxColumn, 
                                                               maxRow=maxRow, column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
     lexCStartWNum = tk.StringVar(value=g.lexCStartW)
-    lexCStartWEntry = CreateEntry([util.Tkinter_Field_Settings(parent=lexCStartWFrame, text='lexCStartW', column=0, row=nbRow, 
+    lexCStartWEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=lexCStartWFrame, text='lexCStartW', column=0, row=nbRow, 
                                                                sticky=sticky, labelWidth=18, 
                                                               variable=lexCStartWNum, command = check_num_wrapper)])
     lexCStartWEntry.bind('<Return>', lambda *args: g.setParam('lexCStartW', float(lexCStartWNum.get())))
 
     nbRow += 1
-    localityFrame = CreateFrame(util.Tkinter_Field_Settings(parent=indexationFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    localityFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=indexationFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
     localityLabel = tk.Label(localityFrame, anchor='nw', text='Locality:')
     localityLabel.grid(column=0, row=nbRow, sticky = sticky)
@@ -603,7 +471,7 @@ def SettingsFrame(frame):
     
     ## FIRST INDEX STRAT NOT FULLY IMPLEMENTED YET
     # nbRow += 1
-    # firstIndexStratFrame = CreateFrame(util.Tkinter_Field_Settings(parent=indexationFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    # firstIndexStratFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=indexationFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
     #                            column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
     # firstIndexStratLabel = tk.Label(firstIndexStratFrame, anchor='nw', text='First Index Strat:')
     # firstIndexStratLabel.grid(column=0, row=nbRow, sticky = sticky)
@@ -629,7 +497,7 @@ def SettingsFrame(frame):
     
     #rst Frame:
     nbRow = 0
-    PFC_typeFrame = CreateFrame(util.Tkinter_Field_Settings(parent=rstFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    PFC_typeFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=rstFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
     PFC_typeLabel = tk.Label(PFC_typeFrame, anchor='nw', text='PFC Type:')
     PFC_typeLabel.grid(column=0, row=nbRow, sticky = sticky)
@@ -655,19 +523,19 @@ def SettingsFrame(frame):
         i += 1
     
     nbRow += 1
-    PFC_lrateFrame = CreateFrame(util.Tkinter_Field_Settings(parent=rstFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    PFC_lrateFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=rstFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
     PFC_lrateNum = tk.StringVar(value=g.PFC_lrate)
-    PFC_lrateEntry = CreateEntry([util.Tkinter_Field_Settings(parent=PFC_lrateFrame, text='PFC Learning Rate', column=0, row=nbRow, 
+    PFC_lrateEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=PFC_lrateFrame, text='PFC Learning Rate', column=0, row=nbRow, 
                                                               sticky=sticky, labelWidth=18, 
                                                               variable=PFC_lrateNum, command = check_num_wrapper)])
     PFC_lrateEntry.bind('<Return>', lambda *args: g.setParam('PFC_lrate', float(PFC_lrateNum.get())))
 
     nbRow += 1
-    PFC_startWFrame = CreateFrame(util.Tkinter_Field_Settings(parent=rstFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
+    PFC_startWFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=rstFrame, maxColumn=maxColumn, columnSpan= maxColumn, maxRow=maxRow, 
                                column=0, row=nbRow, sticky='NEW', width=sizex, height=sizey))
     PFC_startWNum = tk.StringVar(value=g.PFC_startW)
-    PFC_startWEntry = CreateEntry([util.Tkinter_Field_Settings(parent=PFC_startWFrame, text='PFC Starting Weight', column=0, row=nbRow, 
+    PFC_startWEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=PFC_startWFrame, text='PFC Starting Weight', column=0, row=nbRow, 
                                                                sticky=sticky, labelWidth=18,
                                                               variable=PFC_startWNum, command = check_num_wrapper)])
     PFC_startWEntry.bind('<Return>', lambda *args: g.setParam('PFC_startW', float(PFC_startWNum.get())))
@@ -676,7 +544,7 @@ def SettingsFrame(frame):
     gridRow += 1
     maxColumn = 3
     maxRow = 3
-    folderFrame = CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= 3, maxRow=maxRow, 
+    folderFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= 3, maxRow=maxRow, 
                                column=0, row=gridRow, sticky=sticky, width=600, height=75))
     
     # ttk.Frame(frame, borderwidth=0, width=600, height=75)
@@ -705,7 +573,7 @@ def SettingsFrame(frame):
     gridRow += 1
     maxColumn = 2
     maxRow = 3
-    saveSettingsFrame = CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= 3, maxRow=maxRow, 
+    saveSettingsFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= 3, maxRow=maxRow, 
                                column=0, row=gridRow, sticky=sticky, width=600, height=200))
 
     saveRow = 0
@@ -736,7 +604,7 @@ def SettingsFrame(frame):
     
     #LEARN  & VALIDATE BUTTONS
     gridRow += 1
-    val_Learn_Frame = CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= 3, maxRow=maxRow, 
+    val_Learn_Frame = util.CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= 3, maxRow=maxRow, 
                                column=0, row=gridRow, sticky=sticky, width=600, height=200))
     # validateDict = {
     #     'weights': ,
@@ -756,7 +624,9 @@ def SettingsFrame(frame):
     #    result = g.setParam(parameter,value)
     #    if result:   
     #          it's an error or warning
-
+# def util.SendParams():
+#     if weightsRadioVar == 'all':
+#         weightsEntryList
     
 
 def OutputFrame(frame):
@@ -777,10 +647,10 @@ root.maxsize(screen_width, screen_height)
 root.geometry('300x300+50+50')
 
 # Root Grid
-content = CreateFrame(util.Tkinter_Field_Settings(root, ipadx = 6, ipady = 6, width=screen_width, height=screen_height))
-settingsFrame = CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge', maxColumn=1, maxRow=1, columnSpan=1, rowSpan= 2))
-outputFrame = CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge'))
-consoleFrame = CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge'))
+content = util.CreateFrame(util.Tkinter_Field_Settings(root, ipadx = 6, ipady = 6, width=screen_width, height=screen_height))
+settingsFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge', maxColumn=1, maxRow=1, columnSpan=1, rowSpan= 2))
+outputFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge'))
+consoleFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge'))
 
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)

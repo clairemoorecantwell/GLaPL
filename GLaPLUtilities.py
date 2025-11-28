@@ -4,10 +4,12 @@ from tkinter import Variable, ttk
 from tkinter.messagebox import showinfo
 from tkinter import filedialog
 import re
+import sys
 import learner as l
 from typing import NamedTuple
 
 g = l.Grammar()
+platform = sys.platform
 
 validChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', "."]
 
@@ -140,6 +142,139 @@ def PrintOutput(value):
 def ConvertStringListToFloats(value):
     x = value.split(",")
     return x
+
+def CreateFrame(arg):
+    frame = tk.Frame(arg.parent, borderwidth=arg.borderWidth, width=arg.width, height=arg.height, relief=arg.relief)
+    for i in range(arg.maxColumn):
+        frame.columnconfigure(i, weight=arg.weightx)
+    for i in range(arg.maxRow):
+        frame.rowconfigure(i, weight=arg.weighty)
+    frame.grid(column=arg.column, row=arg.row, columnspan=arg.columnSpan, rowspan=arg.rowSpan, sticky=arg.sticky, 
+               padx = arg.padx, pady=arg.pady, ipadx=arg.ipadx, ipady=arg.ipady)
+    return frame
+
+def ToggleWeightsEntries(fieldList, active):
+    for i in range(len(fieldList)):
+        if any(x == i for x in active):
+            fieldList[i].config(state = tk.NORMAL)
+        else:
+            fieldList[i].config(state = tk.DISABLED)
+
+#not used - removing the command line prevents setting a default, it's also not able to intelligently not send a list for the values.
+def CreateRadio_setParam(args, expandX = bool(True)):
+    listItem = 0
+    print(args)
+    column = args.column
+    row = args.row
+    parameter = args.parameter
+    _list = args.list
+    for (text, value) in args.dictionary.items():
+        print(text, value)
+        commandVariable=args.variable[listItem]
+        variable=args.radioVariable
+        r = tk.Radiobutton(
+            args.parent,
+            text=text,
+            value=value,
+            variable=variable,
+            command=lambda *args: g.setParam(parameter, [variable.get(), commandVariable]))
+        r.grid(column=column, row=row, sticky=args.sticky, padx = args.padx, pady=args.pady, ipadx = args.ipadx, ipady = args.ipady)
+        #find a solution for passing two variables through
+        if (len(args.variable) > 1):
+            listItem += 1
+        if (expandX == True):
+            column += 1
+        else:
+            row += 1
+        _list.append(r)
+
+def CreateEntry(args, b = None, fieldList = None, greyOut = None, fieldEntryList = None):
+    if (b == 0):
+        i = len(fieldList) - 1
+        while i >= 0:
+            fieldList[i].destroy()
+            fieldList.remove(fieldList[i])
+            i = i - 1
+        greyOut.config(state = tk.NORMAL)
+    else:
+        for arg in args:
+            fieldLabel = tk.Label(arg.parent, text = arg.text, width = arg.labelWidth, anchor='nw')
+            fieldLabel.grid(column = arg.column, row = arg.row, sticky = arg.sticky, padx = arg.padx, 
+                            ipadx = arg.ipadx, pady = arg.pady, ipady = arg.ipady)
+            fieldEntry = tk.Entry(arg.parent, textvariable = arg.variable, validate = 'key', 
+                                  validatecommand = arg.command, width = arg.entryWidth)
+            fieldEntry.grid(column = arg.column +1, row = arg.row, sticky = arg.sticky, padx = arg.padx, 
+                            ipadx = arg.ipadx, pady = arg.pady, ipady = arg.ipady)
+            if fieldEntryList is not None:
+                if fieldEntry not in fieldEntryList:
+                    fieldEntryList.append(fieldEntry)
+            if fieldList is not None:
+                if fieldLabel not in fieldList:
+                    fieldList.append(fieldLabel)
+                if fieldEntry not in fieldList:
+                    fieldList.append(fieldEntry)
+        if greyOut is not None:
+            greyOut.config(state = tk.DISABLED, disabledbackground = 'grey')
+        return fieldEntry
+
+def SendParams(param, type, value, convertToFloats = False):
+    if convertToFloats == True:
+        value = value.split(",")
+    g.setParam(param, [type, value])
+
+def onFrameConfigure(canvas, frame):
+    '''Reset the scroll region to encompass the inner frame'''
+    canvas.config(scrollregion=canvas.bbox("all"))
+    canvas.create_window((0,0), window=frame, anchor='nw')
+
+def boundToMouseWheel(canvas, event):
+    if platform == 'linux':
+        canvas.bind_all("<Button-4>", onMouseWheel)
+        canvas.bind_all("<Button-5>", onMouseWheel)
+    else:
+        canvas.bind_all("<MouseWheel>", onMouseWheel)
+
+def unboundToMouseWheel(canvas, event):
+    if platform == 'linux':
+        canvas.unbind_all("<Button-4>")
+        canvas.unbind_all("<Button-5>")
+    else:
+        canvas.unbind_all("<MouseWheel>")
+
+def onMouseWheel(canvas, event):
+    print(canvas)
+    print(event)
+    if platform == 'win32' or platform == 'cygwin' or platform == 'linux':
+        canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+    if platform == 'darwin':
+        canvas.yview_scroll(int(-1*(event.delta)), "units")
+
+def show_selected(values):
+    selected_options = []
+    for option, value in values.items():
+        if value.get() == 1:
+            selected_options.append(option)
+    print("Selected options:", selected_options)
+
+def getVars(param, entry):
+    output = str(param)
+    for e in entry:
+        output += ','+e
+    print (output)
+    return output
+
+# def onNotebookTabChange(nb, nbScrollbars):
+#     print('tab ', nb.index('current'))
+#     nbActiveTab = nb.index('current')
+#     for i in range(len(nbScrollbars)):
+#         if i != nbActiveTab:
+#             print('hiding tab ', i, ' scrollbar: ', nbScrollbars[i])
+#             #nbScrollbars[i].grid_remove()
+#             nbScrollbars[i].grid_forget()
+#         else:
+#             print('restoring tab ', i, ' scrollbar: ', nbScrollbars[i])
+#             #nbScrollbars[i].grid()
+#             nbScrollbars[i].grid(column=8, row=0, sticky='NS')
 
 class Tkinter_Field_Settings:
     def __init__(self, parent = None, relief = 'flat', text = None, column = int(0), maxColumn = int(0), 
