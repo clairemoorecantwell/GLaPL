@@ -94,12 +94,6 @@ def ValidateNum(self, input_text):
     except ValueError:
         return False
 
-#not used
-def delete(entry: tk.Entry):
-    entry.config(validate='none')
-    entry.delete(0, END)
-    entry.config(validate='key')
-
 def GetEntryValue(val):
     value = val.get()
     print('Entry value:', value)
@@ -217,11 +211,6 @@ def CreateEntry(args, b = None, fieldList = None, greyOut = None, fieldEntryList
             greyOut.config(state = tk.DISABLED, disabledbackground = 'grey')
         return fieldEntry
 
-def SendParams(param, type, value, convertToFloats = False):
-    if convertToFloats == True:
-        value = value.split(",")
-    g.setParam(param, [type, value])
-
 def onFrameConfigure(canvas, frame):
     '''Reset the scroll region to encompass the inner frame'''
     canvas.config(scrollregion=canvas.bbox("all"))
@@ -262,6 +251,11 @@ def getVars(param, entry):
         output += ','+e
     print (output)
     return output
+
+def SendParams(param, type, value, convertToFloats = False):
+    if convertToFloats == True:
+        value = value.split(",")
+    g.setParam(param, [type, value])
 
 # def onNotebookTabChange(nb, nbScrollbars):
 #     print('tab ', nb.index('current'))
