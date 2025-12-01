@@ -105,10 +105,10 @@ def GetDirectory(value):
     folder = filedialog.askdirectory(initialdir= '.\\')
     value.set(folder)
 
-def ReadTrainingData(param, m):
+def ReadTrainingData(param, m, f):
     filename = filedialog.askopenfilename(initialdir= '.\\')
-    print(filename)
-    x = g.setParam(param,filename)
+    f.set(filename)
+    x = g.setParam(param,f.get())
     m.set(x)
 
 def SendDictionary(param, dictionary):
@@ -247,8 +247,14 @@ def show_selected(values):
 
 def getVars(param, entry):
     output = str(param)
-    for e in entry:
-        output += ','+e
+    if isinstance(entry, list):
+        for i in range (len(entry)):
+            output += ',' + str(entry[i])
+    elif isinstance(entry, dict):
+        for k, v in entry.items():
+            output += ',' + k + ',' + str(v.get())
+    else:
+        output += ',' + str(entry)
     print (output)
     return output
 

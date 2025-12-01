@@ -226,10 +226,11 @@ class GLaPL_Settings:
         self.featureSetFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=self.advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
                                                                           column=0, row=nbRow, sticky=sticky))
         wrapLength=300
-        self.featureInputFile = tk.Label(self.featureSetFrame, text='feature Set File')
-        self.featureInputFile.grid(column=0, row=nbRow, sticky=sticky)
+        self.featureinputLabel = tk.Label(self.featureSetFrame, text='Feature Set File')
+        self.featureinputLabel.grid(column=0, row=nbRow, sticky=sticky)
         self.featureMessage = tk.StringVar()
-        self.featureInputButton = tk.Button(self.featureSetFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('featureSet', self.featureMessage)) 
+        self.featureFile = tk.StringVar()
+        self.featureInputButton = tk.Button(self.featureSetFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('featureSet', self.featureMessage, self.featureFile)) 
         self.featureInputButton.grid(column=1, row=nbRow, sticky=sticky)
         self.featureInputMessage = tk.Label(self.featureSetFrame, textvariable=self.featureMessage, wraplength=wrapLength)
         self.featureInputMessage.grid(column=2, row=nbRow, sticky=sticky)
@@ -246,10 +247,11 @@ class GLaPL_Settings:
         nbRow += 1
         self.constraintsFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=self.advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
                                                                           column=0, row=nbRow, sticky=sticky))
-        self.constraintInputFile = tk.Label(self.constraintsFrame, text='Constraints Set File')
-        self.constraintInputFile.grid(column=0, row=nbRow, sticky=sticky)
+        self.constraintinputLabel = tk.Label(self.constraintsFrame, text='Constraints Set File')
+        self.constraintinputLabel.grid(column=0, row=nbRow, sticky=sticky)
         self.constraintsMessage = tk.StringVar()
-        self.constraintInputButton = tk.Button(self.constraintsFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('Constraints', self.constraintsMessage)) 
+        self.constraintsFile = tk.StringVar()
+        self.constraintInputButton = tk.Button(self.constraintsFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('Constraints', self.constraintsMessage, self.constraintsFile)) 
         self.constraintInputButton.grid(column=1, row=nbRow, sticky=sticky)
         self.constraintInputMessage = tk.Label(self.constraintsFrame, textvariable=self.constraintsMessage, wraplength=wrapLength)
         self.constraintInputMessage.grid(column=2, row=nbRow, sticky=sticky)
@@ -551,10 +553,11 @@ class GLaPL_Settings:
         # ttk.Frame(frame, borderwidth=0, width=600, height=75)
         # folderFrame.grid(column=0, row=2, columnspan=3, sticky=sticky)
         wrapLength=300
-        self.inputFile = tk.Label(folderFrame, text='Training Data File')
-        self.inputFile.grid(column=0, row=gridRow, sticky=sticky)
+        self.inputLabel = tk.Label(folderFrame, text='Training Data File')
+        self.inputLabel.grid(column=0, row=gridRow, sticky=sticky)
         self.message = tk.StringVar()
-        self.inputButton = tk.Button(folderFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('trainingData', message)) 
+        self.inputFile = tk.StringVar()
+        self.inputButton = tk.Button(folderFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('trainingData', self.message, self.inputFile)) 
         self.inputButton.grid(column=1, row=gridRow, sticky=sticky)
         self.inputMessage = tk.Label(folderFrame, textvariable=self.message, wraplength=wrapLength)
         self.inputMessage.grid(column=2, row=gridRow, sticky=sticky)
@@ -585,7 +588,7 @@ class GLaPL_Settings:
         startRow = saveRow
         gridColumn = 0
         maxRows = 2
-        saveTypesDict = {'Weights': tk.BooleanVar(value=g.save_weights), 
+        self.saveTypesDict = {'Weights': tk.BooleanVar(value=g.save_weights), 
                          'Error rates': tk.BooleanVar(value=g.save_errRates), 
                          'Tableaux': tk.BooleanVar(value=g.save_tableaux),
                          'Indexation final state': tk.BooleanVar(value=g.save_finalIndexation), 
@@ -595,8 +598,8 @@ class GLaPL_Settings:
                          'Phonological Form constraints': tk.BooleanVar(value=g.save_PFCs),
                          'Learned Lexicon': tk.BooleanVar(value=g.save_actualLexicon)
                          }
-        for option, value in saveTypesDict.items():
-            check_button = tk.Checkbutton(self.saveSettingsFrame, text=option, variable=value, command=lambda *args: util.SendDictionary('filesToSave',saveTypesDict))
+        for option, value in self.saveTypesDict.items():
+            check_button = tk.Checkbutton(self.saveSettingsFrame, text=option, variable=value, command=lambda *args: util.SendDictionary('filesToSave',self.saveTypesDict))
             check_button.grid(column=gridColumn, row=saveRow, sticky=sticky)
             saveRow += 1
             if saveRow - startRow > maxRows:
@@ -611,7 +614,8 @@ class GLaPL_Settings:
         #     'weights': ,
 
         #     }
-        self.validateButton = tk.Button(self.val_Learn_Frame, width=15, text='Validate')
+        
+        self.validateButton = tk.Button(self.val_Learn_Frame, width=15, text='Validate', command=lambda *args: GLaPL_Settings.validate(self))
         self.validateButton.place(anchor='center')
         self.validateButton.grid(column=0, row=gridRow, padx=12, pady=12, sticky=sticky)
         # collect all params and values in a dictionary and iterate through it and call setParam for each param / value pair
@@ -625,10 +629,44 @@ class GLaPL_Settings:
         #    result = g.setParam(parameter,value)
         #    if result:   
         #          it's an error or warning
-    def validate(self, entries):
+    def validate(self):
         l = []
-        # Weights:
-        for e in entries:
-            l.add(util.getVars(e.key, e.value))
-
+        d = {'trainingData': self.inputFile.get(),
+                   'outfolder' : self.outputPath.get(),
+                   'threshold' : self.thresholdNum.get(),
+                   'decayRate' : self.decayRateNum.get(),
+                   'decayType' : self.decayRateRadio.get(),
+                   'featureSet' : self.featureFile.get(),
+                   'generateCandidates' : self.genCandidatesBool.get(),
+                   'constraints' : self.constraintsFile.get(),
+                   'addViolations' : self.addViolationsBool.get(),
+                   'noisy' : self.verboseOutputBool.get(),
+                   'filesToSave' : self.saveTypesDict,
+                   'useListedType' : self.listedTypeRateRadio.get(),
+                   'useListedRate' : self.listedRateNum.get(),
+                   'flip' : self.flipBool.get(),
+                   'simpleListing' : self.simpleListingBool.get(),
+                   'pToList' : self.pToListNum.get(),
+                   'nLexCs' : self.nLexCsNum.get(),
+                   'pChangeIndexation' : self.pChangeIndexationNum.get(),
+                   'lexCStartW' : self.lexCStartWNum.get(),
+                   'locality' : self.localityRateRadio.get(),
+                   'first_index_strategy' : self.firstIndexStratRateRadio.get(),
+                   'PFC_type' : self.PFC_typeRateRadio.get(),
+                   'PFC_lrate' : self.PFC_lRateNum.get(),
+                   'PFC_startW' : self.PFC_startWNum.get()
+                   }
+        if self.lRateDecreaseBool.get():
+            d['learningRate'] = [self.lRateStartNum.get(), self.lRateEndNum.get()]
+        else:
+            d['learningRate'] = [self.lRateNum.get()]
+        if self.weightsRadioVar.get() == 'all':
+            d['weights'] = ['all',float(self.weightSetAllNum.get())]
+        elif self.weightsRadioVar.get() == 'rand':
+            d['weights'] = ['rand',float(self.weightsRandomMin.get()), float(self.weightsRandomMax.get())]
+        elif self.weightsRadioVar.get() == 'setIndividually':
+            d['weights'] = ['setIndividually',float(self.weightsSetIndividually.get())]
+        for k, v in d.items():
+            l.append(util.getVars(k, v))
+        print (l)
         return l
