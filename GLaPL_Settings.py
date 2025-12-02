@@ -107,10 +107,10 @@ class GLaPL_Settings:
         self.weightsLabel = tk.Label(self.weightsFrame, anchor='nw', text='Starting Weights')
         self.weightsLabel.grid(column = 0, row=nbRow, sticky=sticky)
         self.weightTypeRadio = tk.StringVar()
-        self.weightSetAllNum = tk.StringVar(value='0')
-        self.weightsRandomMin = tk.StringVar(value='0')
-        self.weightsRandomMax = tk.StringVar(value='10')
-        self.weightsSetIndividually = tk.StringVar(value='0')
+        self.weightSetAllNum = tk.StringVar(value=0)
+        self.weightsRandomMin = tk.StringVar(value=0)
+        self.weightsRandomMax = tk.StringVar(value=10)
+        self.weightsSetIndividually = tk.StringVar(value=0)
         self.weightsVarList = [float(self.weightSetAllNum.get()), [float(self.weightsRandomMin.get()), float(self.weightsRandomMax.get())], self.weightsSetIndividually.get()]
         self.weightsOptions = {'Set all to' : 'all',
                         'Randomize between' : 'rand',
@@ -156,7 +156,7 @@ class GLaPL_Settings:
 
         nbRow += 1
         self.lRateFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=self.generalFrame, maxColumn=2, columnSpan= 8, maxRow=1, column=0, row=nbRow, sticky=sticky))
-        self.lRateNum = tk.StringVar()
+        self.lRateNum = tk.StringVar(value=g.learningRate)
         self.lRateEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent = self.lRateFrame, text = 'Learning Rate', column = 0, row = nbRow, 
                                                               sticky = sticky, variable = self.lRateNum, command = self.root.check_num_wrapper,
                                                               labelWidth = 12, entryWidth = 15)])
@@ -177,7 +177,7 @@ class GLaPL_Settings:
 
         nbRow += 1
         self.decayRateFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=self.generalFrame, maxColumn=10, columnSpan= 8, maxRow=1, column=0, row=nbRow, sticky=sticky))
-        self.decayRateNum = tk.StringVar()
+        self.decayRateNum = tk.StringVar(g.decayRate)
         self.decayRateEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=self.decayRateFrame, text='Decay Rate', column=0, row=nbRow, sticky=sticky, 
                                                                   variable=self.decayRateNum, command=self.root.check_num_wrapper)])
         self.decayRateEntry.bind('<Return>', lambda *args: g.setParam("decayRate", float(self.decayRateNum.get())))
@@ -196,7 +196,7 @@ class GLaPL_Settings:
         # util.CreateRadio_setParam(util.Tkinter_Field_Settings(parent=self.decayRateFrame, dictionary=self.decayOptions, parameter='decayType', radioVariable=self.decayRateRadio, variableDefault='NoDecay', 
         #                                                  variable=[self.decayRateNum], column=2, row=nbRow, sticky=sticky, padx=15, _list=self.decayRateRadioList))
         #self.decayRateRadioList[0].config(command=lambda *args: g.setParam('decayType','L1'))
-        self.decayRateRadio.set('NoDecay')
+        self.decayRateRadio.set(g.decayType)
 
         nbRow += 1
         self.totalIterationsNum = tk.StringVar()
@@ -610,10 +610,6 @@ class GLaPL_Settings:
         gridRow += 1
         self.val_Learn_Frame = util.CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= 3, maxRow=maxRow, 
                                    column=0, row=gridRow, sticky=sticky, width=600, height=200))
-        # validateDict = {
-        #     'weights': ,
-
-        #     }
         
         self.validateButton = tk.Button(self.val_Learn_Frame, width=15, text='Validate', command=lambda *args: GLaPL_Settings.validate(self))
         self.validateButton.place(anchor='center')
@@ -668,5 +664,7 @@ class GLaPL_Settings:
             d['weights'] = ['setIndividually',float(self.weightsSetIndividually.get())]
         for k, v in d.items():
             l.append(util.getVars(k, v))
-        print (l)
+        # print (l)
+        for k, v in d.items():
+            g.setParam(k, v)
         return l

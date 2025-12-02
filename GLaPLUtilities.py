@@ -255,7 +255,6 @@ def getVars(param, entry):
             output += ',' + k + ',' + str(v.get())
     else:
         output += ',' + str(entry)
-    print (output)
     return output
 
 def SendParams(param, type, value, convertToFloats = False):
