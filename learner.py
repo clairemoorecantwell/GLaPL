@@ -774,6 +774,8 @@ class Grammar:
         self.startWeightParam = ("all",0.0)
         self.generateCandidates = False
         self.addViolations = False
+        self.totalIterations = 100000
+        self.epochs = 100
 
         self.logFile = "GLaPL.txt"
         self.label = "glOutput"

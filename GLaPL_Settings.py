@@ -27,6 +27,7 @@ class GLaPL_Settings:
         self.root.check_num_0to1_wrapper = (self.root.register(util.CheckNum0to1), '%P')
         self.root.check_numList_wrapper = (self.root.register(util.CheckNumList),'%P')
         
+
         # CONTENT SETTINGS
         sticky = 'NSEW'
         maxColumn = 8
@@ -107,7 +108,7 @@ class GLaPL_Settings:
         self.weightsLabel = tk.Label(self.weightsFrame, anchor='nw', text='Starting Weights')
         self.weightsLabel.grid(column = 0, row=nbRow, sticky=sticky)
         self.weightTypeRadio = tk.StringVar()
-        self.weightSetAllNum = tk.StringVar(value=0)
+        self.weightSetAllNum = tk.StringVar(value=g.startWeightParam[1])
         self.weightsRandomMin = tk.StringVar(value=0)
         self.weightsRandomMax = tk.StringVar(value=10)
         self.weightsSetIndividually = tk.StringVar(value=0)
@@ -129,7 +130,7 @@ class GLaPL_Settings:
             nbRow += 1
             rowCount += 1
             self.weightRadioCount += 1
-        self.weightsRadioVar.set('all')
+        self.weightsRadioVar.set(g.startWeightParam[0])
     
         self.weightsRadioList[0].config(command=lambda *args: util.ToggleWeightsEntries(self.weightsEntryList, active=[0]))
         self.weightsRadioList[1].config(command=lambda *args: util.ToggleWeightsEntries(self.weightsEntryList, active=[1,2]))
@@ -177,7 +178,7 @@ class GLaPL_Settings:
 
         nbRow += 1
         self.decayRateFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=self.generalFrame, maxColumn=10, columnSpan= 8, maxRow=1, column=0, row=nbRow, sticky=sticky))
-        self.decayRateNum = tk.StringVar(g.decayRate)
+        self.decayRateNum = tk.StringVar(value=g.decayRate)
         self.decayRateEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=self.decayRateFrame, text='Decay Rate', column=0, row=nbRow, sticky=sticky, 
                                                                   variable=self.decayRateNum, command=self.root.check_num_wrapper)])
         self.decayRateEntry.bind('<Return>', lambda *args: g.setParam("decayRate", float(self.decayRateNum.get())))
@@ -199,13 +200,13 @@ class GLaPL_Settings:
         self.decayRateRadio.set(g.decayType)
 
         nbRow += 1
-        self.totalIterationsNum = tk.StringVar()
+        self.totalIterationsNum = tk.StringVar(value=g.totalIterations)
         self.totalIterationsFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=self.generalFrame, maxColumn=2, columnSpan= 8, maxRow=1, column=0, row=nbRow, sticky=sticky))
         self.totalIterationsEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=self.totalIterationsFrame, text='Total Iterations', column=0, row=nbRow, sticky=sticky, 
                                                                   variable=self.totalIterationsNum)])
 
         nbRow += 1
-        self.epochsNum = tk.StringVar(value = g.epoch)
+        self.epochsNum = tk.StringVar(value=g.epochs)
         self.epochsFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=self.generalFrame, maxColumn=2, columnSpan= 8, maxRow=1, column=0, row=nbRow, sticky=sticky))
         self.epochsEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=self.totalIterationsFrame, text='Epochs', column=0, row=nbRow, sticky=sticky, 
                                                                   variable=self.epochsNum, command = self.root.check_num_wrapper)])
@@ -229,7 +230,7 @@ class GLaPL_Settings:
         self.featureinputLabel = tk.Label(self.featureSetFrame, text='Feature Set File')
         self.featureinputLabel.grid(column=0, row=nbRow, sticky=sticky)
         self.featureMessage = tk.StringVar()
-        self.featureFile = tk.StringVar()
+        self.featureFile = tk.StringVar(value=g.featureSet)
         self.featureInputButton = tk.Button(self.featureSetFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('featureSet', self.featureMessage, self.featureFile)) 
         self.featureInputButton.grid(column=1, row=nbRow, sticky=sticky)
         self.featureInputMessage = tk.Label(self.featureSetFrame, textvariable=self.featureMessage, wraplength=wrapLength)
@@ -250,7 +251,7 @@ class GLaPL_Settings:
         self.constraintinputLabel = tk.Label(self.constraintsFrame, text='Constraints Set File')
         self.constraintinputLabel.grid(column=0, row=nbRow, sticky=sticky)
         self.constraintsMessage = tk.StringVar()
-        self.constraintsFile = tk.StringVar()
+        self.constraintsFile = tk.StringVar(value=g.constraintsModule)
         self.constraintInputButton = tk.Button(self.constraintsFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('Constraints', self.constraintsMessage, self.constraintsFile)) 
         self.constraintInputButton.grid(column=1, row=nbRow, sticky=sticky)
         self.constraintInputMessage = tk.Label(self.constraintsFrame, textvariable=self.constraintsMessage, wraplength=wrapLength)
@@ -556,7 +557,7 @@ class GLaPL_Settings:
         self.inputLabel = tk.Label(folderFrame, text='Training Data File')
         self.inputLabel.grid(column=0, row=gridRow, sticky=sticky)
         self.message = tk.StringVar()
-        self.inputFile = tk.StringVar()
+        self.inputFile = tk.StringVar(value=g.trainingData)
         self.inputButton = tk.Button(folderFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('trainingData', self.message, self.inputFile)) 
         self.inputButton.grid(column=1, row=gridRow, sticky=sticky)
         self.inputMessage = tk.Label(folderFrame, textvariable=self.message, wraplength=wrapLength)
@@ -565,7 +566,7 @@ class GLaPL_Settings:
         gridRow += 1
         self.outputFolder = tk.Label(folderFrame, text='Output Folder')
         self.outputFolder.grid(column=0, row=gridRow, sticky=sticky)
-        self.outputPath = tk.StringVar()
+        self.outputPath = tk.StringVar(value=g.outfolder)
         self.outputFolderButton = tk.Button(folderFrame, width=15, text='Select Folder', command=lambda *args : util.GetDirectory(self.outputPath)) 
         self.outputFolderButton.grid(column=1, row=gridRow, sticky=sticky)
         self.outputFolderName = tk.Label(folderFrame, textvariable=self.outputPath, wraplength=wrapLength)
@@ -616,7 +617,8 @@ class GLaPL_Settings:
         self.validateButton.grid(column=0, row=gridRow, padx=12, pady=12, sticky=sticky)
         # collect all params and values in a dictionary and iterate through it and call setParam for each param / value pair
 
-        self.learnButton = tk.Button(self.val_Learn_Frame, width=15, text='Learn')
+        self.learnButton = tk.Button(self.val_Learn_Frame, width=15, text='Learn', command=lambda *args: 
+                                     g.learn(float(self.totalIterationsNum.get()) / float(self.epochsNum.get()), float(self.epochsNum.get())))
         self.learnButton.place(anchor='center')
         self.learnButton.grid(column=2, row=gridRow, padx=12, pady=12, sticky=sticky)
 
