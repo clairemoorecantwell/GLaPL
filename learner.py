@@ -767,7 +767,7 @@ class Grammar:
         self.constraintsModule = None
 
         # Defaults:
-        self.learningRate = [0.01,0.01]
+        self.learningRate = 0.01
         self.comparisonThreshold = 1
         self.decayRate = 0
         self.decayType = "NoDecay"
@@ -904,14 +904,15 @@ class Grammar:
 
         # GENERAL PARAMETERS
         elif parameter=="learningRate":
-            learningRate = value
-
-            errmessage = "WARNING: learningRate was not a float, or list of two floats. Using previous value of ["+" ".join([str(i for i in self.learningRate)])+"]"
+            learningRate = value.split(",")
+            
+            errmessage = "WARNING: learningRate was not a float, or list of two floats. Using previous value of "+str(self.learningRate)
             try:
                 if len(learningRate)==2:
+                    learningRate = [float(re.sub(r"[\[\]]",i,"")) for i in learningRate]
                     self.learningRate = learningRate
                 elif len(learningRate)==1:
-                    self.learningRate = [learningRate[0],learningRate[0]]
+                    self.learningRate = [float(learningRate),float(learningRate)]
                 else:
                     return errmessage
             except:

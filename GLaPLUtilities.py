@@ -275,6 +275,9 @@ def SendParams(param, type, value, convertToFloats = False):
 #             #nbScrollbars[i].grid()
 #             nbScrollbars[i].grid(column=8, row=0, sticky='NS')
 
+def resize_widgets(event, canvas, tag, width, height):
+    canvas.itemconfigure(tag, height=height)
+
 class Tkinter_Field_Settings:
     def __init__(self, parent = None, relief = 'flat', text = None, column = int(0), maxColumn = int(0), 
                  columnSpan = int(1), row = int(0), maxRow = int(0), rowSpan = int(1), width = int(600), 

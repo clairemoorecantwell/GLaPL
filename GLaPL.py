@@ -14,7 +14,8 @@ from venv import create
 import sys
 import learner as l
 import GLaPLUtilities as util
-from GLaPL_Settings import GLaPL_Settings
+from GLaPL_Settings import Settings
+from GLaPL_Console import Console as Console
 
 
 root = tk.Tk()
@@ -31,14 +32,6 @@ g = l.Grammar()
 #         weightsEntryList
     
 
-def OutputFrame(frame):
-    frame.grid(column=3, row=0, columnspan=3, sticky='NSEW')
-
-def ConsoleFrame(frame):
-    frame.grid(column=3, row=1, columnspan=3, sticky='NSEW')
-
-
-
 # Setting some window properties
 root.title('GLaPL')
 root.configure(background='grey')
@@ -51,8 +44,11 @@ root.geometry('300x300+50+50')
 # Root Grid
 content = util.CreateFrame(util.Tkinter_Field_Settings(root, ipadx = 6, ipady = 6, width=screen_width, height=screen_height))
 settingsFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge', maxColumn=1, maxRow=1, columnSpan=1, rowSpan= 2))
-outputFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge'))
-consoleFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge'))
+settingsFrame.grid(column=0, row=0, columnspan=3, sticky='NSEW')
+outputFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge', maxColumn=1, maxRow=1, columnSpan=1))
+outputFrame.grid(column=3, row=0, columnspan=3, sticky='NSEW')
+consoleFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge', maxColumn=1, maxRow=1, columnSpan=1))
+consoleFrame.grid(column=3, row=1, columnspan=3, sticky='NSEW')
 
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
@@ -71,15 +67,18 @@ content.grid(column=0, row=0, sticky='NSEW')
 
 #Settings Frame:
 
-settings = GLaPL_Settings
-GLaPL_Settings.SettingsFrame(settings, root=root, frame= settingsFrame)
+#Console Frame:
+# ConsoleFrame(consoleFrame)
+console = Console(root=root, frame=consoleFrame)
+console.ConsoleFrame()
+
+settings = Settings(root=root, frame=settingsFrame, console=console)
+settings.SettingsFrame()
 
 
 #Output Frame:
-OutputFrame(outputFrame)
+#OutputFrame(outputFrame)
 
-#Console Frame:
-ConsoleFrame(consoleFrame)
 
 
 

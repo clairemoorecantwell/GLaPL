@@ -1,6 +1,5 @@
 
 import tkinter as tk
-#from tkinter import *
 from tkinter import END, Entry, Variable, ttk
 from tkinter.messagebox import showinfo
 from tkinter import filedialog
@@ -9,19 +8,21 @@ from venv import create
 import sys
 import learner as l
 import GLaPLUtilities as util
+import GLaPL_Console as console
 
 g = l.Grammar()
-
 platform = sys.platform
 
-class GLaPL_Settings:
+class Settings:
     self = None
-    def __init__(self):
+    def __init__(self, root, frame, console):
         self = self
-
-    def SettingsFrame(self, root, frame):
-        self.frame = frame
         self.root = root
+        self.frame = frame
+        self.console = console
+    def SettingsFrame(self):
+        # self.frame = frame
+        # self.root = root
 
         self.root.check_num_wrapper = (self.root.register(util.CheckNum),'%P')
         self.root.check_num_0to1_wrapper = (self.root.register(util.CheckNum0to1), '%P')
@@ -35,7 +36,7 @@ class GLaPL_Settings:
         column = 0
         gridRow = 0
         width = 680
-        contentSettingsFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=frame, maxColumn=maxColumn, columnSpan=3, 
+        contentSettingsFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=self.frame, maxColumn=maxColumn, columnSpan=3, 
                                                                        maxRow=maxRow, column=column, row=gridRow, sticky=sticky, pady = 5, height=680))
         sticky = 'NW'
         maxColumn = 1
@@ -589,15 +590,15 @@ class GLaPL_Settings:
         startRow = saveRow
         gridColumn = 0
         maxRows = 2
-        self.saveTypesDict = {'Weights': tk.BooleanVar(value=g.save_weights), 
-                         'Error rates': tk.BooleanVar(value=g.save_errRates), 
-                         'Tableaux': tk.BooleanVar(value=g.save_tableaux),
-                         'Indexation final state': tk.BooleanVar(value=g.save_finalIndexation), 
-                         'Indexed constraints weights over time (by constraint)': tk.BooleanVar(value=g.save_indexedWeightsByConstraint), 
-                         'Indexed constraints weights over time (by lexeme) -- LARGE FILE': tk.BooleanVar(value=g.save_indexedWeightsByLexeme),
-                         'Listing history': tk.BooleanVar(value=g.save_listingHistory),
-                         'Phonological Form constraints': tk.BooleanVar(value=g.save_PFCs),
-                         'Learned Lexicon': tk.BooleanVar(value=g.save_actualLexicon)
+        self.saveTypesDict = {'Weights': tk.BooleanVar(value=g.save_weights).get(), 
+                         'Error rates': tk.BooleanVar(value=g.save_errRates).get(), 
+                         'Tableaux': tk.BooleanVar(value=g.save_tableaux).get(),
+                         'Indexation final state': tk.BooleanVar(value=g.save_finalIndexation).get(), 
+                         'Indexed constraints weights over time (by constraint)': tk.BooleanVar(value=g.save_indexedWeightsByConstraint).get(), 
+                         'Indexed constraints weights over time (by lexeme) -- LARGE FILE': tk.BooleanVar(value=g.save_indexedWeightsByLexeme).get(),
+                         'Listing history': tk.BooleanVar(value=g.save_listingHistory).get(),
+                         'Phonological Form constraints': tk.BooleanVar(value=g.save_PFCs).get(),
+                         'Learned Lexicon': tk.BooleanVar(value=g.save_actualLexicon).get()
                          }
         for option, value in self.saveTypesDict.items():
             check_button = tk.Checkbutton(self.saveSettingsFrame, text=option, variable=value, command=lambda *args: util.SendDictionary('filesToSave',self.saveTypesDict))
@@ -612,7 +613,7 @@ class GLaPL_Settings:
         self.val_Learn_Frame = util.CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= 3, maxRow=maxRow, 
                                    column=0, row=gridRow, sticky=sticky, width=600, height=200))
         
-        self.validateButton = tk.Button(self.val_Learn_Frame, width=15, text='Validate', command=lambda *args: GLaPL_Settings.validate(self))
+        self.validateButton = tk.Button(self.val_Learn_Frame, width=15, text='Validate', command=lambda *args: Settings.validate(self))
         self.validateButton.place(anchor='center')
         self.validateButton.grid(column=0, row=gridRow, padx=12, pady=12, sticky=sticky)
         # collect all params and values in a dictionary and iterate through it and call setParam for each param / value pair
@@ -628,7 +629,6 @@ class GLaPL_Settings:
         #    if result:   
         #          it's an error or warning
     def validate(self):
-        l = []
         d = {'trainingData': self.inputFile.get(),
                    'outfolder' : self.outputPath.get(),
                    'threshold' : self.thresholdNum.get(),
@@ -655,18 +655,17 @@ class GLaPL_Settings:
                    'PFC_startW' : self.PFC_startWNum.get()
                    }
         if self.lRateDecreaseBool.get():
-            d['learningRate'] = [self.lRateStartNum.get(), self.lRateEndNum.get()]
+            d['learningRate'] = str('['+self.lRateStartNum.get()+','+self.lRateEndNum.get()+']')
         else:
-            d['learningRate'] = [self.lRateNum.get()]
+            d['learningRate'] = str('['+self.lRateNum.get()+']')
         if self.weightsRadioVar.get() == 'all':
-            d['weights'] = ['all',float(self.weightSetAllNum.get())]
+            d['weights'] = str('all,'+self.weightSetAllNum.get())
         elif self.weightsRadioVar.get() == 'rand':
-            d['weights'] = ['rand',float(self.weightsRandomMin.get()), float(self.weightsRandomMax.get())]
+            d['weights'] = str('rand,',self.weightsRandomMin.get()+','+self.weightsRandomMax.get())
         elif self.weightsRadioVar.get() == 'setIndividually':
-            d['weights'] = ['setIndividually',float(self.weightsSetIndividually.get())]
+            d['weights'] = str('setIndividually,'+self.weightsSetIndividually.get())
         for k, v in d.items():
-            l.append(util.getVars(k, v))
-        # print (l)
-        for k, v in d.items():
-            g.setParam(k, v)
+            m = g.setParam(k, v)
+            if m != None:
+                self.console.updateConsole(m)
         return l
