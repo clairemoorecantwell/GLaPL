@@ -42,19 +42,21 @@ root.maxsize(screen_width, screen_height)
 root.geometry('300x300+50+50')
 
 # Root Grid
-content = util.CreateFrame(util.Tkinter_Field_Settings(root, ipadx = 6, ipady = 6, width=screen_width, height=screen_height))
-settingsFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge', maxColumn=1, maxRow=1, columnSpan=1, rowSpan= 2))
-settingsFrame.grid(column=0, row=0, columnspan=3, sticky='NSEW')
-outputFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge', maxColumn=1, maxRow=1, columnSpan=1))
-outputFrame.grid(column=3, row=0, columnspan=3, sticky='NSEW')
-consoleFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge', maxColumn=1, maxRow=1, columnSpan=1))
-consoleFrame.grid(column=3, row=1, columnspan=3, sticky='NSEW')
+width = 1280
+height = 720
+content = util.CreateFrame(util.Tkinter_Field_Settings(root, ipadx = 6, ipady = 6, column=0, row=0, maxColumn=1, maxRow=1, width=width, height=height, sticky='NSEW'))
+settingsFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge', column=0, row=0, maxColumn=1, maxRow=1, columnSpan=1, rowSpan= 2, width=width/2, height=height, sticky='NSEW'))
+#settingsFrame.grid(column=0, row=0, columnspan=3, sticky='NSEW')
+outputFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge', column=1, row=0, maxColumn=1, maxRow=1, columnSpan=1, rowSpan = 1, width=width/2, height=height / 2, sticky='NSEW'))
+#outputFrame.grid(column=3, row=0, columnspan=3, sticky='NSEW')
+consoleFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge', column=1, row=1, maxColumn=1, maxRow=1, columnSpan=1, rowSpan = 1, width=width/2, height=height / 2, sticky='NSEW'))
+#consoleFrame.grid(column=3, row=1, columnspan=3, sticky='NSEW')
 
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
 
 #Configuring columns and rows to scale with the window
-maxColumn = 6
+maxColumn = 2
 maxRow = 2
 for i in range(maxColumn):
     content.columnconfigure(i, weight=1)

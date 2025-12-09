@@ -281,7 +281,7 @@ def resize_widgets(event, canvas, tag, width, height):
 class Tkinter_Field_Settings:
     def __init__(self, parent = None, relief = 'flat', text = None, column = int(0), maxColumn = int(0), 
                  columnSpan = int(1), row = int(0), maxRow = int(0), rowSpan = int(1), width = int(600), 
-                 height = int(200), weightx = int(1), weighty = int(1), sticky = 'NSEW', variable = None, 
+                 height = int(350), weightx = int(1), weighty = int(1), sticky = 'NSEW', variable = None, 
                  variableDefault = None, command = None, radioVariable = None, entry = None, padx = int(0), 
                  ipadx = int(0), pady = int(0), ipady = int(0), borderWidth = int(0), labelWidth = 12, 
                  entryWidth = 15, dictionary = None, _list = [], parameter = None):
