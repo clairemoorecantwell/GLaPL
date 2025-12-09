@@ -664,8 +664,14 @@ class Settings:
             d['weights'] = str('rand,',self.weightsRandomMin.get()+','+self.weightsRandomMax.get())
         elif self.weightsRadioVar.get() == 'setIndividually':
             d['weights'] = str('setIndividually,'+self.weightsSetIndividually.get())
+        self.console.updateHistory('Configuration Settings:')
+        for k, v in d.items():
+            m = str(k) + ' ' + str(v)
+            self.console.updateHistory(m)
+        #inserting a linebreak
+        self.console.updateHistory('')
         for k, v in d.items():
             m = g.setParam(k, v)
             if m != None:
-                self.console.updateConsole(m)
+                self.console.updateProgress(m)
         return l
