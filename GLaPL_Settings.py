@@ -581,15 +581,15 @@ class Settings:
         startRow = saveRow
         gridColumn = 0
         maxRows = 2
-        self.saveTypesDict = {'Weights': tk.BooleanVar(value=g.save_weights).get(), 
-                         'Error rates': tk.BooleanVar(value=g.save_errRates).get(), 
-                         'Tableaux': tk.BooleanVar(value=g.save_tableaux).get(),
-                         'Indexation final state': tk.BooleanVar(value=g.save_finalIndexation).get(), 
-                         'Indexed constraints weights over time (by constraint)': tk.BooleanVar(value=g.save_indexedWeightsByConstraint).get(), 
-                         'Indexed constraints weights over time (by lexeme) -- LARGE FILE': tk.BooleanVar(value=g.save_indexedWeightsByLexeme).get(),
-                         'Listing history': tk.BooleanVar(value=g.save_listingHistory).get(),
-                         'Phonological Form constraints': tk.BooleanVar(value=g.save_PFCs).get(),
-                         'Learned Lexicon': tk.BooleanVar(value=g.save_actualLexicon).get()
+        self.saveTypesDict = {'Weights': tk.BooleanVar(value=g.save_weights), 
+                         'Error rates': tk.BooleanVar(value=g.save_errRates), 
+                         'Tableaux': tk.BooleanVar(value=g.save_tableaux),
+                         'Indexation final state': tk.BooleanVar(value=g.save_finalIndexation), 
+                         'Indexed constraints weights over time (by constraint)': tk.BooleanVar(value=g.save_indexedWeightsByConstraint), 
+                         'Indexed constraints weights over time (by lexeme) -- LARGE FILE': tk.BooleanVar(value=g.save_indexedWeightsByLexeme),
+                         'Listing history': tk.BooleanVar(value=g.save_listingHistory),
+                         'Phonological Form constraints': tk.BooleanVar(value=g.save_PFCs),
+                         'Learned Lexicon': tk.BooleanVar(value=g.save_actualLexicon)
                          }
         for option, value in self.saveTypesDict.items():
             check_button = tk.Checkbutton(self.saveSettingsFrame, text=option, variable=value, command=lambda *args: util.SendDictionary('filesToSave',self.saveTypesDict))
