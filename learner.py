@@ -2828,7 +2828,7 @@ class trainingData:
         self.sampler = [s / sum(self.sampler) for s in self.sampler]  # convert to a well-formed distribution
         
     # TODO do I have to worry about these getting too small
-        return "Success"
+
     def __str__(self):
         trainTags = []
         for i, k in zip(self.learnData, self.sampler):

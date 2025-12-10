@@ -233,8 +233,8 @@ class Settings:
         nbRow += 1
         self.genCandidatesFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=self.advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
                                                                           column=0, row=nbRow, sticky=sticky))
-        self.genCandidatesBool = tk.BooleanVar()
-        self.genCandidatesBool.set(g.generateCandidates)
+        self.genCandidatesBool = tk.BooleanVar(value=g.generateCandidates)
+        #self.genCandidatesBool.set(g.generateCandidates)
         self.genCandidatesCheckBox = tk.Checkbutton(self.genCandidatesFrame, text="Generate Candidates:", variable=self.genCandidatesBool, 
                                                command=lambda *args: g.setParam("generateCandidates", value=self.genCandidatesBool.get()))
         self.genCandidatesCheckBox.grid(column=0, row=nbRow, sticky=sticky)
@@ -552,7 +552,7 @@ class Settings:
         self.inputFile = tk.StringVar(value=g.trainingData)
         self.inputButton = tk.Button(folderFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('trainingData', self.message, self.inputFile)) 
         self.inputButton.grid(column=1, row=gridRow, sticky=sticky)
-        self.inputMessage = tk.Label(folderFrame, textvariable=self.message, wraplength=wrapLength)
+        self.inputMessage = tk.Label(folderFrame, textvariable=self.inputFile, wraplength=wrapLength)
         self.inputMessage.grid(column=2, row=gridRow, sticky=sticky)
 
         gridRow += 1
