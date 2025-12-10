@@ -14,8 +14,8 @@ class Console:
 
     def ConsoleFrame(self):
         width = 1280*.475-100
-        height = 280
-        consoleNotebook = ttk.Notebook(self.frame, width=width)
+        height = 720 / 2
+        consoleNotebook = ttk.Notebook(self.frame, width=width, height=height)
 
         historyFrame = tk.Frame(consoleNotebook)
         historyFrame.pack(fill='both', expand=True)

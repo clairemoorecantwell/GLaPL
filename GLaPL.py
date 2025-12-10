@@ -5,7 +5,6 @@ Created on Wed Oct 22 20:20:47 2025
 @author: moore-cantwell
 '''
 import tkinter as tk
-#from tkinter import *
 from tkinter import END, Entry, Variable, ttk
 from tkinter.messagebox import showinfo
 from tkinter import filedialog
@@ -15,7 +14,8 @@ import sys
 import learner as l
 import GLaPLUtilities as util
 from GLaPL_Settings import Settings
-from GLaPL_Console import Console as Console
+from GLaPL_Console import Console
+from GLaPL_Output import Output
 
 
 root = tk.Tk()
@@ -82,7 +82,8 @@ settings.SettingsFrame()
 
 
 #Output Frame:
-#OutputFrame(outputFrame)
+output = Output(root=root, frame=outputFrame)
+output.OutputFrame()
 
 
 
