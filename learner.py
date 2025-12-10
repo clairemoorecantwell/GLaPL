@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from ast import Param
 import math
 import numpy as np
 from itertools import chain
@@ -11,6 +12,7 @@ import sys
 from colorama import Fore, Back, Style
 import importlib
 import datetime
+import os
 
 class Features:
     def __init__(self, filename, skipChar='x'):
@@ -500,7 +502,7 @@ class Tableau:
         #print(type(lexeme))
         #print(lexeme.tag)
         if lexCname is None:
-            lexCname = constraint.name + '_' + lexeme.tag
+            lexCname = constraint.name + '__' + lexeme.tag
 
         self.constraintList.append(lexCname)
 
@@ -629,7 +631,7 @@ class Tableau:
                 # look for indexation on a constraint
                 if index >0: # if this lexeme has an indexed version
                     lexCw = weightList[index] # get its weight
-                    lexCname = cname + '_' + str(index) + '_' + lexeme.tag # e.g. Syncope_2_ta
+                    lexCname = cname + '__' + str(index) + '__' + lexeme.tag # e.g. Syncope_2_ta
 
                     if cIndex >= cFunctionsStartAfter: # if it's a function
                         #print(gram.constraints)
@@ -655,6 +657,7 @@ class Tableau:
             # is the constraint a function?
                 # if yes, apply it according to candidates' lexeme membership
                 # if no, apply its violation to the whole candidate
+
 
 
     def calculateHarmony(self, w):
@@ -754,11 +757,409 @@ class Tableau:
 #sampleGrammar =
 
 class Grammar:
-    def __init__(self, config = "config.gl",inputFile=None):
+    def __init__(self):
         self.t = 0
-        self.config = config
-        self.inputFile = inputFile
-        self.readFromConfig(config,inputFile)
+
+        # External files that MUST be read in to be used:
+        self.trainingData = None
+        self.outfolder = None
+        self.featureSet = None
+        self.constraintsModule = None
+
+        # Defaults:
+        self.learningRate = 0.01
+        self.comparisonThreshold = 1
+        self.decayRate = 0
+        self.decayType = "NoDecay"
+        self.startWeightParam = ("all",0.0)
+        self.generateCandidates = False
+        self.addViolations = False
+        self.totalIterations = 100000
+        self.epochs = 100
+
+        self.logFile = "GLaPL.txt"
+        self.label = "glOutput"
+        self.noisy = False
+        self.save_listingHistory = False
+        self.save_tableaux = True
+        self.save_errRates = True
+        self.save_weights = True
+        self.save_finalIndexation = False
+        self.save_indexedWeightsByConstraint = False
+        self.save_indexedWeightsByLexeme = False
+        self.save_PFCs = False
+        self.save_actualLexicon = False
+
+        self.useListedType = "none"
+        self.p_useListed = 0
+        self.useListedRate = 1.0
+        self.flip = False
+        self.simpleListing = True 
+        self.pToList = 0.75
+
+        self.lexC_type = 0
+        self.pChangeIndexation = 0.75
+        self.lexCStartW = 5.0
+        self.localityRestrictionType = "overlap"
+        self.firstIndexStrat = "lowest"
+
+        self.PFC_type = "none"
+        self.PFC_lrate = 0.1
+        self.PFC_startW = 5.0
+
+
+    def checkParams(self):
+
+        warnings = []
+
+        # Checks for files and modules
+        if self.trainingData == None:
+            return "ERROR: No training data"
+
+        if self.outfolder == None:
+            return "ERROR: Output folder not set"
+
+        if self.addViolations or self.generateCandidates:
+            if self.constraintsModule == None:
+                self.addViolations = False
+                self.generateCandidates = False
+                warnings.append("WARNING: You have specified that violations should be added or that candidates should be generated, but no constraints module was read in. Violations will not be added and/or candidates will not be generated.")
+
+        # TODO this does not actually check for operations, need to when we're ready to generate candidates.
+        if self.generateCandidates:
+            if self.constraints != "None":
+                self.operations = constraints.operations
+            else:
+                warnings.append("WARNING: you have specified generateCandidates as 'True' but no operations could be read off the constraints module.\n Ensure that your constraints module " + self.constraints +" exists, and contains an object called 'operations'.\n No operations are in effect.")
+
+
+        if self.addViolations: # get all constraint names from constraints module
+            self.trainingData.constraintNames+= [c.name for c in self.constraints]
+
+        if self.p_useListed > 0:
+            self.cPairs = self.prepForUselisted()
+
+        if self.p_useListed == 0:
+            # remove _listed versions of each constraint
+            indexPairs = []
+            toRemove = []
+            for name in self.trainingData.constraintNames:
+                if re.search("_listed", name):
+                    cname = re.sub('_listed', '', name)
+                    indexPlain = self.trainingData.constraintNames.index(cname)
+                    indexListed = self.trainingData.constraintNames.index(name)
+                    indexPairs.append((indexPlain, indexListed))
+                    toRemove.append(indexListed)
+
+            toRemove = sorted(toRemove, reverse=True)
+            # check whether to also remove constraint weights
+            if len(self.w) == len(self.trainingData.constraintNames):
+                cDrop = True
+            for i in toRemove:
+                self.trainingData.constraintNames.pop(i)
+                if cDrop:
+                    self.w.pop(i)
+                for tableau in self.trainingData.tableaux:
+                    for candidate in tableau.candidates:
+                        candidate.violations.pop(i)
+        
+        self.initializeWeights()
+
+        self.cfunctionStartIndex = len(self.trainingData.constraintNames)
+        self.lexCjumpParameter = self.pChangeIndexation**(1/self.lexCStartW)
+
+        if self.lexC_type:
+            self.prepForLexC()
+
+
+    def setParam(self,parameter, value):
+        print(parameter, value)
+        # FILE HANDLING
+        if parameter=="trainingData": 
+            try:
+                self.trainingData = trainingData(value)
+            except:
+                return "ERROR: Training data not read in! Please check the file format and location."
+
+        elif parameter == "outfolder": 
+            try:
+                self.outfolder = value
+                if not os.path.exists(self.outfolder):
+                    os.makedirs(self.outfolder)
+            except: 
+                return "ERROR: Output folder not accessible"
+
+        elif parameter=="logFile": 
+            try:
+                self.logFile = value
+            except:
+                return "WARNING: logfile not set. Using previous value of "+ self.logfile
+
+        elif parameter == "label":
+            try:
+                self.label = value
+            except:
+                return "WARNING: output label not set. Using previous value of "+ self.label
+
+
+        # GENERAL PARAMETERS
+        elif parameter=="learningRate":
+            learningRate = value.split(",")
+            
+            errmessage = "WARNING: learningRate was not a float, or list of two floats. Using previous value of "+str(self.learningRate)
+            try:
+                if len(learningRate)==2:
+                    learningRate = [float(re.sub(r"[\[\]]",i,"")) for i in learningRate]
+                    self.learningRate = learningRate
+                elif len(learningRate)==1:
+                    self.learningRate = [float(learningRate),float(learningRate)]
+                else:
+                    return errmessage
+            except:
+                return errmessage
+
+        # advanced
+        elif parameter == "threshold":
+            errmessage = "WARNING: threshold could not be converted to float, or was greater than 1.  Using previous value of "+ str(self.comparisonThreshold)
+
+            try:
+                self.comparisonThreshold = float(value)
+            except:
+                return errmessage
+                self.comparisonThreshold = 1
+            if self.comparisonThreshold > 1:
+                return errmessage
+
+        # general
+        elif parameter == "decayRate":
+            try:
+                self.decayRate = float(value)
+            except:
+                return "WARNING: decay rate not set. Using previous value of "+str(self.decayRate)
+
+
+        # general
+        elif parameter=="decayType":
+            if value not in ["Static","L1","L2","NoDecay"]:
+                return "WARNING: decay type must be Static, L1, L2, or No Decay. Using previous value of "+ self.decayType
+            else:
+                self.decayType = value
+
+        # general
+        elif parameter == "weights":
+            errmessage = "WARNING: invalid weight parameter. Using previous value of " + str(self.startWeightParam)
+            # weight parameters come in tuples
+            # ('all',0.0)  <- set all constraints to a specific weight
+            # ('rand',0.0,10.0)  <- randomize between 0 and 10
+            # ('setIndividually', [0.0,1.0,3.1,1.2,2.0]) <- set a start weight for each constraint
+            try:
+                if value[0]=='all':
+                    float(value[1]) #check that it's a single float
+                elif value[0]=='rand':
+                    float(value[1])
+                    float(value[2])
+                elif value[0]=='setIndividually':
+                    for w in value[1]:
+                        float(w)
+                else:
+                    return errmessage
+                self.startWeightParam = value
+            except:
+                return errmessage
+
+        # MODULES
+        # advanced (read file)
+        elif parameter == "featureSet":
+            try:
+                self.featureSet = Features(value)
+                self.featuresFileName = value
+            except:
+                self.featureSet = None
+                return "ERROR: Your feature set file, " + value + " did not work. No features read in."
+
+        # advanced (bool checkbox)
+        elif parameter == "generateCandidates":
+            try:
+                self.generateCandidates = eval(value)
+            except:
+                return "WARNING: generateCandidates must be set to 'True' or 'False'.  Using previous value of " + str(self.generateCandidates)
+
+        # advanced (read file)
+        elif parameter=="constraints":
+            try:
+                constraints = importlib.import_module(value)
+                self.constraintsModule = value
+                self.constraints = constraints.constraints
+            except:
+                return "ERROR: Your constraints module file, " + value + " did not work. No constraints or operations read in."
+
+        # advanced (bool checkbox)
+        elif parameter == "addViolations":
+            try:
+                self.addViolations = eval(value)
+            except:
+                return "WARNING: addViolations must be set to 'True' or 'False'. Using previous value of " + str(self.addViolations)
+                self.addViolations = False
+
+
+        # LEARNING REPORTING PARAMETERS
+        # advanced 'verbose console output'
+        elif parameter == "noisy":
+            try:
+                self.noisy = eval(value)
+            except:
+                return "WARNING: value for 'noisy' could not be converted to bool. Using previous value of " + str(self.noisy)
+                self.noisy = False
+
+        elif parameter == "filesToSave":
+            #print(value)
+            try:
+                self.save_tableaux = value['Tableaux']
+                self.save_errRates = value['Error rates']
+                self.save_weights = value['Weights']
+                self.save_finalIndexation = value['Indexation final state']
+                self.save_indexedWeightsByConstraint = value['Indexed constraints weights over time (by constraint)']
+                self.save_indexedWeightsByLexeme = value['Indexed constraints weights over time (by lexeme) -- LARGE FILE']
+                self.save_listingHistory = value['Listing history']
+                self.save_PFCs = value['Phonological Form Constraints']
+                self.save_actualLexicon = value['Actual Lexicon']
+            except:
+                return "WARNING: your choices of which output file to save was not read in properly. Previous values will be used."
+
+
+        # LISTING PARAMETERS
+        #string
+        elif parameter == "useListedType":
+            #print(parameter, ' ', value)
+            self.useListedType = value
+            if value=="hidden_structure":
+                self.p_useListed = 3
+            elif value=="sample_using_frequency":
+                self.p_useListed = 2
+            elif value=="sample_flat_rate":
+                self.p_useListed = 1
+            elif value=="none":
+                self.p_useListed = 0
+            else:
+                return "WARNING: value for 'useListedType' is unrecognized.  Using default value, no lexical listing."
+                self.p_useListed = 0
+
+        #float 0 - 1
+        elif parameter == "useListedRate":
+            #print(parameter, ' ', value)
+            try:
+                self.useListedRate = float(value)
+            except:
+                return "WARNING: useListedRate cannot be converted to float.  Using default value of 1, always use listed form if available."
+                self.p_useListed = 1
+        #bool
+        elif parameter == "flip":
+            #print(parameter, ' ', value)
+            try:
+                self.flip = eval(value)
+            except:
+                return "WARNING: flip must be True or False.  Using default of False."
+                self.flip = False
+        
+        #bool
+        elif parameter == "simpleListing":
+            #print(parameter, ' ', value)
+            try:
+                self.simpleListing = eval(value)
+            except:
+                return "WARNING: simpleListing must be True or False.  Using default value of True."
+                self.simpleListing = True
+        
+        #float 0-1
+        elif parameter == "pToList":
+            #print(parameter, ' ', value)
+            try:
+                self.pToList = float(value)
+            except:
+                return "WARNING: pToList could not be converted to float.  Using default value of 0.75"
+                self.pToList = 0.75
+        
+
+        # INDEXATION PARAMETERS
+        # int
+        elif parameter == "nLexCs":
+            #print(parameter, ' ', value)
+            try:
+                self.lexC_type = float(value)
+            except:
+                return "WARNING: nLexCs could not be converted to float. Not using Lexically indexed constraints."
+                self.lexC_type = 0
+        # float 0-1    
+        elif parameter == "pChangeIndexation":
+            #print(parameter, ' ', value)
+            try:
+                self.pChangeIndexation = float(value)
+            except:
+                return "\nWARNING: pChangeIndexation could not be converted to float.  Using default value of 0.75"
+                self.pChangeIndexation = 0.75
+        # float
+        elif parameter == "lexCStartW":
+            #print(parameter, ' ', value)
+            try:
+                self.lexCStartW = float(value)
+            except:
+                return "WARNING: lexCStartW could not be converted to float.  Using default value of 5.0"
+                self.lexCStartW = 5.0
+        # string - radioButton
+        elif parameter == "locality":
+            #print(parameter, ' ', value)
+            try:
+                self.localityRestrictionType = value
+            except:
+                return "WARNING: localityRestrictionType not assigned.  Using default value of 'overlap'"
+                self.localityRestrictionType = "overlap"
+        # string - radioButton
+        elif parameter == "first_index_strategy":
+            #print(parameter, ' ', value)
+            try:
+                self.firstIndexStrat = value
+            except:
+                return "WARNING: first_index_strategy not recognized.  Using default of 'lowest'"
+                self.firstIndexStrat = "lowest"
+
+
+        # RST PARAMETERS
+        # string - radioButton
+        elif parameter == "PFC_type":
+            #print(parameter, ' ', value)
+            self.PFC_type = value
+            if self.PFC_type not in ["none","pseudo","full"]:
+                return "WARNING PFC_type must be one of 'none', 'pseudo' or 'full'.  Using default value 'none', no PFCs."
+                self.PFC_type = "none"
+        # float > 0
+        elif parameter == "PFC_lrate":
+            #print(parameter, ' ', value)
+            try:
+                self.PFC_lrate = float(value)
+            except:
+                return "WARNING: PFC_lrate could not be converted to float.  Using default value of 0.1"
+                self.PFC_lrate = 0.1
+        # float
+        elif parameter == "PFC_startW":
+            #print(parameter, ' ', value)
+            try:
+                self.PFC_startW = float(value)
+            except:
+                return "WARNING: PFC_startW could not be converted to float.  Using default value of 5.0"
+                self.PFC_startW = 5.0
+
+
+        # GSR's (not using currently)
+        elif parameter == "activityUpdateRate":
+            try:
+                self.activityUpdateRate = float(value)
+            except:
+                print("\nWARNING: activityUpdateRate could not be converted to float.  Using default value of 0.05")
+                self.activityUpdateRate = 0.05
+
+        else:
+            print("\n WARNING: I don't recognize the parameter " + parameter)
+
 
     def readFromConfig(self,config="config.gl",inputFile=None):
         with open(config) as f:
@@ -773,343 +1174,11 @@ class Grammar:
                         print(Fore.RED + "\nERROR: Row " + str(row) + " of " + config + " has the wrong number of entries.  It should have the form parameterName: parameterValue"+ Style.RESET_ALL)
                         exit()
 
-                    if param[0]=="trainingData":
-                        if inputFile is None:
-                            self.trainingDatafile = param[1]
-                        else:
-                            self.trainingDatafile = inputFile
-                        try:
-                            self.trainingData = trainingData(self.trainingDatafile)
-                            self.cfunctionStartIndex = len(self.trainingData.constraintNames)
+                    #if param[1][1]=="["
+                    #convert from text
 
-                        except:
-                            print(Fore.RED + "\nERROR: No training data file read in.  Please check the format and path to your file: " + self.trainingDatafile + Style.RESET_ALL)
-                            exit()
-                            
-                    elif param[0] == "weights":
-                        self.startWeightParam = param[1]
-                        weights = param[1]
-                        print(weights)
-                        weights = weights.split(",")
-                        print(weights)
-                        if weights[0] !='random':
-                            try:
-                                weights = [float(w) for w in weights]
-                                if weights == [0]:
-                                    self.w = []
-                                else:
-                                    self.w = weights
-
-                            except ValueError:
-                                print("\nWARNING: not all weight values in " + config +" could be converted to float")
-                                print("Using default weights of 0 instead"+ Style.RESET_ALL)
-                                self.w = []
-                        else:
-                            self.w = weights
-
-                    elif param[0]=="featureSet":
-                        self.featuresFileName=(param[1])
-                        try:
-                            self.featureSet = Features(param[1])
-                        except:
-                            print(Fore.RED +"\nERROR: Your feature set file, " + param[1] + " did not work."+ Style.RESET_ALL)
-
-                    elif param[0]=="addViolations":
-                        try:
-                            self.addViolations = eval(param[1])
-                        except:
-                            print("\nWARNING: addViolations must be set to 'True' or 'False'. Using default value of 'False'")
-                            self.addViolations = False
-
-                    elif param[0]=="constraints":
-                        self.constraintsModule = param[1]
-                        if self.constraintsModule != "None" and self.addViolations:
-                            try:
-                                constraints = importlib.import_module(self.constraintsModule)
-                                self.constraints = constraints.constraints
-                                self.cfunctionStartIndex = len(self.trainingData.constraintNames)
-                                self.trainingData.constraintNames+= [c.name for c in self.constraints]
-                            except Exception as e:
-                                print("\nWARNING: no constraints module found called " + self.constraints)
-                                self.constraints = "None"
-
-                        # initialize weights now that we have all the constraints,
-                        # but before initializing LexCs
-                        if len(self.w)==0:
-                            self.initializeWeights()
-                        elif self.w[0]=='random':
-                            self.initializeWeights(self.w)
-
-                    elif param[0]=="generateCandidates":
-                        try:
-                            self.generateCandidates = eval(param[1])
-                        except:
-                            print("\nWARNING: generateCandidates must be set to 'True' or 'False'.  Using default value of 'False'")
-                            self.generateCandidates = False
-
-                        if self.generateCandidates:
-                            if self.constraints != "None":
-                                self.operations = constraints.operations
-                            else:
-                                print("\nWARNING: you have specified generateCandidates as 'True' but no operations could be read off the constraints module.\n Ensure that your constraints module " + self.constraints +" exists, and contains an object called 'operations'.\n No operations are in effect.")
-
-                    elif param[0]=="learningRate":
-                        learningRate = param[1]
-                        learningRate = learningRate.split(",")
-                        try:
-                            if len(learningRate)==2:
-                                self.learningRate = learningRate
-                            elif len(learningRate)==1:
-                                self.learningRate = [learningRate[0],learningRate[0]]
-                            else:
-                                print("\nWARNING: learningRate could not be converted to float.  Using 0.01")
-                                self.learningRate = [0.01,0.01]
-                        except:
-                            print("\nWARNING: learningRate could not be converted to float.  Using 0.01")
-                            self.learningRate = [0.01,0.01]
-
-                    elif param[0]=="decayRate":
-                        try:
-                            self.decayRate = float(param[1])
-                        except:
-                            print("\nWARNING: decayRate could not be converted to float.  Using 0.0001")
-                            self.decayRate = 0.0001
-
-                    elif param[0]=="decayType":
-                        try:
-                            self.decayType = param[1]
-                        except:
-                            print("\nWARNING: decayType not recognized.  Using static decay")
-                            self.decayType = "static"
-
-                        if self.decayType not in ["static","L1","L2"]:
-                            print("\nWARNING: decayType not recognized.  Using static decay")
-                            self.decayType = "static"
-
-                    elif param[0]=="threshold":
-                        try:
-                            self.comparisonThreshold = float(param[1])
-                        except:
-                            print("\nWARNING: threshold could not be converted to float.  Using default value of 1.  This means that observed forms will always be sampled \n(This has no effect if your dataset does not contain within-item variation)")
-                            self.comparisonThreshold = 1
-                        if self.comparisonThreshold > 1:
-                            print("\nWARNING: You specified a threshold value of more than 1.  This will be treated as 1")
-
-                    elif param[0]=="noisy":
-                        if param[1]=="yes":
-                            self.noisy = True
-                        elif param[1]=="no":
-                            self.noisy = False
-                        else:
-                            print("\nWARNING: " + config + " value for 'noisy' is neither 'yes' nor 'no'.  Using default value of 'no'")
-                            self.noisy = False
-
-                    elif param[0]=="useListedType":
-                        self.useListedType = param[1]
-
-                        if param[1]=="hidden_structure":
-                            self.p_useListed = 3
-                        elif param[1]=="sample_using_frequency":
-                            self.p_useListed = 2
-                        elif param[1]=="sample_flat_rate":
-                            self.p_useListed = 1
-                        elif param[1]=="none":
-                            self.p_useListed = 0
-                        else:
-                            print("\nWARNING: " + config + " value for 'useListedType' is unrecognized.  Using default value, no lexical listing.")
-                            self.p_useListed = 0
-
-                        if self.p_useListed > 0:
-                            self.cPairs = self.prepForUselisted()
-
-                        if self.p_useListed == 0:
-                            # remove _listed versions of each constraint
-                            indexPairs = []
-                            toRemove = []
-                            for name in self.trainingData.constraintNames:
-                                if re.search("_listed", name):
-                                    cname = re.sub('_listed', '', name)
-                                    indexPlain = self.trainingData.constraintNames.index(cname)
-                                    indexListed = self.trainingData.constraintNames.index(name)
-                                    indexPairs.append((indexPlain, indexListed))
-                                    toRemove.append(indexListed)
-
-                            toRemove = sorted(toRemove, reverse=True)
-                            # check whether to also remove constraint weights
-                            if len(self.w) == len(self.trainingData.constraintNames):
-                                cDrop = True
-                            for i in toRemove:
-                                self.trainingData.constraintNames.pop(i)
-                                if cDrop:
-                                    self.w.pop(i)
-                                for tableau in self.trainingData.tableaux:
-                                    for candidate in tableau.candidates:
-                                        candidate.violations.pop(i)
-
-                    elif param[0]=="useListedRate":
-                        if self.p_useListed <= 1 and self.p_useListed>0:
-                            try:
-                                self.p_useListed = float(param[1])
-                            except:
-                                print("\nWARNING: useListedRate cannot be converted to float.  Using default value of 1, always use listed form if available.")
-                                self.p_useListed = 1
-
-                    elif param[0]=="flip":
-                        if self.p_useListed>0:
-                            try:
-                                self.flip = eval(param[1])
-                            except:
-                                print("\nWARNING: flip must be True or False.  Using default of False.")
-                                self.flip = False
-                        else:
-                            self.flip = False
-
-                    elif param[0]=="simpleListing":
-                        if self.p_useListed>0:
-                            try:
-                                self.simpleListing = eval(param[1])
-                            except:
-                                print("\nWARNING: simpleListing must be True or False.  Using default value of True.")
-                                self.simpleListing = True
-
-                            if self.simpleListing and self.flip:
-                                print("\nWARNING: simpleListing and flip are mutually exclusive.  Setting flip to False.")
-                        else:
-                            self.simpleListing = False
-                    elif param[0]=="pToList":
-                        try:
-                            self.pToList = float(param[1])
-                        except:
-                            print("\nWARNING: pToList could not be converted to float.  Using default value of 0.75")
-                            self.pToList = 0.75
-
-                    elif param[0]=="nLexCs":
-                        try:
-                            self.lexC_type = float(param[1])
-                        except:
-                            print("\nWARNING: nLexCs could not be converted to float. Not using Lexically indexed constraints.")
-                            self.lexC_type = 0
-                        
-                        if self.lexC_type:
-                            self.prepForLexC()
-
-                    elif param[0]=="pChangeIndexation":
-                        try:
-                            self.pChangeIndexation = float(param[1])
-                        except:
-                            print("\nWARNING: pChangeIndexation could not be converted to float.  Using default value of 0.5")
-                            self.pChangeIndexation = 0.5
-
-                    elif param[0]=="lexCStartW":
-                        try:
-                            self.lexCStartW = float(param[1])
-                        except:
-                            print("\nWARNING: lexCStartW could not be converted to float.  Using default value of 5.0")
-                        self.lexCjumpParameter = self.pChangeIndexation**(1/self.lexCStartW)
-
-                    elif param[0]=="locality":
-                        try:
-                            self.localityRestrictionType = param[1]
-                        except:
-                            print("\nWARNING: localityRestrictionType not assigned.  Using default value of 'overlap'")
-                            self.localityRestrictionType = "overlap"
-
-                    elif param[0]=="first_index_strategy":
-                        try:
-                            self.firstIndexStrat = param[1]
-                        except:
-                            print("\n WARNING: first_index_strategy not recognized.  Using default of 'lowest'")
-                            self.firstIndexStrat = "lowest"
-
-                    elif param[0]=="PFC_type":
-                        self.PFC_type = param[1]
-                        if self.PFC_type not in ["none","pseudo","full"]:
-                            print("\nWARNING PFC_type must be one of 'none', 'pseudo' or 'full'.  Using default value 'none', no PFCs.")
-
-                    elif param[0]=="PFC_lrate":
-                        try:
-                            self.PFC_lrate = float(param[1])
-                        except:
-                            print("\nWARNING: PFC_lrate could not be converted to float.  Using default value of 0.1")
-                            self.PFC_lrate = 0.1
-
-                    elif param[0]=="PFC_startW":
-                        try:
-                            self.PFC_startW = float(param[1])
-                        except:
-                            print("\nWARNING: PFC_startW could not be converted to float.  Using default value of 10.0")
-                            self.PFC_startW = 10.0
-
-                    elif param[0]=="activityUpdateRate":
-                        try:
-                            self.activityUpdateRate = float(param[1])
-                        except:
-                            print("\nWARNING: activityUpdateRate could not be converted to float.  Using default value of 0.05")
-                            self.activityUpdateRate = 0.05
-
-                    elif param[0]=="outfolder":
-                        try:
-                            self.outfolder = param[1]
-                        except:
-                            #### TODO: make better warning message
-                            print("\nWARNING: outfolder doesn't work")
-
-                    elif param[0]=="logFile":
-                        try:
-                            self.logFile = param[1]
-                        except:
-                            #### TODO: make better warning message
-                            print("\n WARNING: logfile doesn't work")
-
-                    elif param[0]=="label":
-                        try:
-                            self.label = param[1]
-                        except:
-                            #### TODO: make better warning message
-                            print("\n WARNING: label doesn't work")
-
-
-                    else:
-                        print("\n WARNING: I don't recognize the parameter " + param[0])
-
-        # check if all the parameters are there that should be
-        print("Training from file: "+self.trainingDatafile)
-        print("Feature set: "+self.featuresFileName)
-
-
-
-        try:
-            if self.addViolations:
-                try:
-                    print("Violations will be added from "+ self.constraintsModule)
-                except:
-                    print(Fore.RED +"\n ERROR: no constraints module found!  Specify the name under parameter 'constraints'."+Style.RESET_ALL)
-            else:
-                print("Constraint violations come only from input file")
-        except:
-            print("\n WARNING: You have not specified whether constraint violations should be added to your tableaux via function (using 'addViolations').  Violations will be taken directly from your input file only.")
-
-        try:
-            if self.generateCandidates:
-                try:
-                    print("Candidates will be generated, using module "+ self.constraintsModule)
-                except:
-                    print(Fore.RED +"\n ERROR: no constraints module found!  Specify the name under parameter 'constraints'."+Style.RESET_ALL)
-            else:
-                print("Candidates will not be generated")
-        except:
-            print("\n WARNING: You have not specified whether candidates should be generated (using 'generateCandidates').  Candidates will be taken directly from your input file only.")
-        
-
-        try:
-            print("Learning Rate: "+ str(self.learningRate))
-        except:
-            print("\n WARNING: no learning rate specified (using 'learningRate').  Default value of 0.01 will be used.")
-        
-        print("Threshold for considering a prediction an error: "+str(self.comparisonThreshold))
-        print("")
-        # self.w
-        # TODO finish this up
+                    self.setParam(param[0],param[1])
+                    self.checkParams()
 
         # Print out constraint names and weights at end of read-in
         print(Fore.BLUE + Back.WHITE +"\nYour constraints and starting weights:")
@@ -1117,6 +1186,32 @@ class Grammar:
         print( '\n'+printform.format(*[str(i) for i in self.trainingData.constraintNames]))
         print(printform.format(*[str(i) for i in self.w])+Style.RESET_ALL)
 
+    def L2Decay(self, weights, decayRate = .01):
+        return [i - (decayRate/2)*(i**2) for i in weights]
+    
+    def L1Decay(self, weights, decayRate = .01):
+        return [i - decayRate*i for i in weights]
+    
+    def staticDecay(self, weights, decayRate = .01):
+        return [i - decayRate for i in weights]
+    
+    def decay(self, weights, decayRate = False, decayType = False):
+        if not decayRate:
+            decayRate = self.decayRate
+        if not decayType:
+            decayType = self.decayType
+            
+        if decayType == "static":
+            w = self.staticDecay(weights, decayRate) 
+
+        elif decayType == 'L1':
+            w = self.L1Decay(weights, decayRate)
+
+        elif decayType == 'L2':
+            w = self.L2Decay(weights, decayRate)
+        
+        return [i if i > 0 else 0 for i in w]  # lower bound at zero
+    
     def prepForUselisted(self):
         UseListedIndex = None
 
@@ -1168,10 +1263,28 @@ class Grammar:
 
     def initializeWeights(self, w=None):
         '''Function to initialize the weights - can take an argument, which is hopefully the same length as the number of constraints in the Tableaux object.  If it doesn't get that argument, it will initialize them to zero. '''
-        # TODO (low priority atm) Add functionality to initialize weights to random values
         # figure out how many constraints we have all together
-        nC = len(self.trainingData.constraintNames) #+ (len(self.constraints) if self.constraints else 0)
-        #print(nC)
+        nC = len(self.trainingData.constraintNames)
+        if self.startWeightParam[0]=='all':
+            self.w = [self.startWeightParam[1]] * nC
+
+        elif self.startWeightParam[0]=='rand':
+            upper = float(self.startWeightParam[1])
+            lower = float(self.startWeightParam[2])
+            self.w = [random.random()*(upper-lower)+lower]
+            for i in range(1,nC):
+                self.w.append(random.random()*(upper-lower)+lower)
+
+        elif self.startWeightParam[0]=='setIndividually':
+            if len(self.startWeightParam[1]) == nC:
+                self.w = self.startWeightParam[1]
+            else:
+                return "ERROR: given start weight parameter has "+ str(len(self.startWeightParam[1])) + " entries, but there are "+ str(nC) + " constraints."
+        else:
+            print("\nERROR: weight parameter should be one of 'all', 'rand', or 'setIndividually")
+
+
+
         if w is None:
             self.w = [0] * nC
         elif w[0] =='random':
@@ -1209,7 +1322,7 @@ class Grammar:
             for lex in lexemes:
                 lex.decayPFC(self.t, self.decayRate, decayType=self.decayType)
                 #print("decaying")
-                if len(lex.PFCs) > len(self.featureSet.featureNames) * len(lex.segLabels) * 4:
+                if self.featureSet and len(lex.PFCs) > len(self.featureSet.featureNames) * len(lex.segLabels) * 4:
                     print("WARNING: too many PFCs")
                     break
 
@@ -1221,21 +1334,12 @@ class Grammar:
         #decay LexCs
         if self.lexC_type:
             for c in range(0, len(self.lexCs)):
-
                 # decay all lexCs
-                if self.decayType == "static":
-                    self.lexCs[c] = [i - self.decayRate for i in self.lexCs[c]] 
-
-                elif self.decayType == 'L1':
-                    self.lexCs[c] = [i - self.decayRate*i for i in self.lexCs[c]]
-
-                elif self.decayType == 'L2':
-                    self.lexCs[c] = [i - (self.decayRate/2)*(i**2) for i in self.lexCs[c]]
+                self.lexCs[c] = self.decay(self.lexCs[c])
                 
-                self.lexCs[c] = [i if i > 0 else 0 for i in self.lexCs[c]]  # lower bound at zero
-
-
-
+        #decay general constraints
+        self.w = self.decay(self.w)
+        
         # grab, create, or fill out the tableau
         tab = self.makeTableau(datum)
 
@@ -1563,11 +1667,12 @@ class Grammar:
                 f.write(out)
 
             # print("learning complete")
-            with open(pfcsFilename+str(n)+".txt", "w") as f:
-                out = "\t".join(PFC_list)
-                for ep in PFCs_w:
-                    out += "\n" + "\t".join([str(pfc) for pfc in ep] + ["0" for i in PFC_list[len(ep):]])
-                f.write(out)
+            if self.PFC_type:
+                with open(pfcsFilename+str(n)+".txt", "w") as f:
+                    out = "\t".join(PFC_list)
+                    for ep in PFCs_w:
+                        out += "\n" + "\t".join([str(pfc) for pfc in ep] + ["0" for i in PFC_list[len(ep):]])
+                        f.write(out)
 
             if self.lexC_type:
                 with open(lexCsFilename+str(n)+".txt","w") as f:
@@ -1934,7 +2039,9 @@ class Grammar:
                     multiInputType = 'useListed'
                     urList = [datum[0],[self.trainingData.lexicon[listedTag]]]
 
-                    tab.lexemes = (urList,(composedCandIndices,listedCandIndices))
+                    # Previously was this: do we need those indices for any reason?
+                    #tab.lexemes = (urList,(composedCandIndices,listedCandIndices))
+                    tab.lexemes = urList
                     return tab
 
 
@@ -2268,7 +2375,7 @@ class Grammar:
             if u >=len(self.w): # it's an indexed c
 
                 label = tab.constraintList[u]
-                parsedLabel = label.split("_")
+                parsedLabel = label.split("__")
                 name = parsedLabel[0]
                 index = int(parsedLabel[1])
                 lexTag = parsedLabel[2]
@@ -2406,6 +2513,11 @@ class lexeme:
         self.freq = 1  # initialize at zero, increase during learning.  This number reflects the actual frequency of the lexeme during learning, rather than the frequency in the training data
         self.PFCs = []  # list of PFC objects, optional.
         self.lexCindexes = []  # list of indexation values for lex C's, indexing into Grammar.lexCs
+        # self.URCs = [functions, just weights?]
+        # input tableau has Faith, Faith_Listed <- if they disagree, can make a second URC
+        # list of lists of faithfulness constraint names, each list represents a possible UR
+        # [[],[Ident-voice],[Ident-long],[Ident-voice,Ident-long]]
+        # self.URC_w
         self.lastSeen = 0
 
     def __str__(self):
@@ -2567,7 +2679,10 @@ class trainingData:
         freq_weighted = False
         specialLex = False
 
-        f = open(filename, "r")
+        try:
+            f = open(filename, "r")
+        except:
+            return "ERROR: unable to read input file " + filename
         lines = f.readlines()
         header = lines[0].split('\t')
         header = [label.strip() for label in header]
@@ -2576,23 +2691,21 @@ class trainingData:
             iIndex = header.index('input')
             constraintsStartAt += 1
         else:
-            print(Fore.RED +
-                "\nERROR: No column of your input file is labeled 'input'.  This column is required, and must be labelled exactly.  Please check your input file and try again" + Style.RESET_ALL)
-            sys.exit()
+            return "ERROR: No column of your input file is labeled 'input'.  This column is required, and must be labelled exactly.  Please check your input file and try again"
 
         if 'obs.prob' in header:
             oIndex = header.index('obs.prob')
             constraintsStartAt += 1
         else:
-            print(Fore.RED +
-                "\nERROR: No column of your input file is labeled 'obs.prob'.  This column is required, and must be labelled exactly.  Please check your input file and try again"+ Style.RESET_ALL)
-            sys.exit()
+            return "ERROR: No column of your input file is labeled 'obs.prob'.  This column is required, and must be labelled exactly.  Please check your input file and try again"
+
         if 'candidate' in header:
             candidates = True
             cIndex = header.index('candidate')
             constraintsStartAt += 1
             if self.noisy:
                 print(Fore.CYAN + "\nYour input file contains candidates, therefore candidates will not be generated for you." + Style.RESET_ALL)
+
         if 'surface' in header:
             hidden = True  # Its always going to be hidden, right? cause if there are no candidates then the tableau generation system will generate hidden structure
             sIndex = header.index('surface')
@@ -2713,7 +2826,7 @@ class trainingData:
 
         f.close()
         self.sampler = [s / sum(self.sampler) for s in self.sampler]  # convert to a well-formed distribution
-
+        
     # TODO do I have to worry about these getting too small
 
     def __str__(self):

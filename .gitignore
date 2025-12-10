@@ -1,0 +1,17 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class
+
+# Visual Studio config
+.vsconfig/
+
+# Visual Studio cache directory
+.vs/
+
+# Visual Studio Code cache directory
+.vscode/
+
+*.csproj
+*.sln
+/tmp
