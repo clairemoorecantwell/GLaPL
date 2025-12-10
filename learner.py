@@ -767,17 +767,20 @@ class Grammar:
         self.constraintsModule = None
 
         # Defaults:
-        self.learningRate = [0.01,0.01]
+        self.learningRate = 0.01
         self.comparisonThreshold = 1
         self.decayRate = 0
         self.decayType = "NoDecay"
         self.startWeightParam = ("all",0.0)
         self.generateCandidates = False
         self.addViolations = False
+        self.totalIterations = 100000
+        self.epochs = 100
 
         self.logFile = "GLaPL.txt"
         self.label = "glOutput"
         self.noisy = False
+        self.save_listingHistory = False
         self.save_tableaux = True
         self.save_errRates = True
         self.save_weights = True
@@ -787,6 +790,7 @@ class Grammar:
         self.save_PFCs = False
         self.save_actualLexicon = False
 
+        self.useListedType = "none"
         self.p_useListed = 0
         self.useListedRate = 1.0
         self.flip = False
@@ -874,7 +878,7 @@ class Grammar:
 
 
     def setParam(self,parameter, value):
-
+        print(parameter, value)
         # FILE HANDLING
         if parameter=="trainingData": 
             try:
@@ -905,14 +909,15 @@ class Grammar:
 
         # GENERAL PARAMETERS
         elif parameter=="learningRate":
-            learningRate = value
-
-            errmessage = "WARNING: learningRate was not a float, or list of two floats. Using previous value of ["+" ".join([str(i for i in self.learningRate)])+"]"
+            learningRate = value.split(",")
+            
+            errmessage = "WARNING: learningRate was not a float, or list of two floats. Using previous value of "+str(self.learningRate)
             try:
                 if len(learningRate)==2:
+                    learningRate = [float(re.sub(r"[\[\]]",i,"")) for i in learningRate]
                     self.learningRate = learningRate
                 elif len(learningRate)==1:
-                    self.learningRate = [learningRate[0],learningRate[0]]
+                    self.learningRate = [float(learningRate),float(learningRate)]
                 else:
                     return errmessage
             except:
@@ -1003,7 +1008,7 @@ class Grammar:
 
 
         # LEARNING REPORTING PARAMETERS
-        # advanced
+        # advanced 'verbose console output'
         elif parameter == "noisy":
             try:
                 self.noisy = eval(value)
@@ -1012,6 +1017,7 @@ class Grammar:
                 self.noisy = False
 
         elif parameter == "filesToSave":
+            #print(value)
             try:
                 self.save_tableaux = value['Tableaux']
                 self.save_errRates = value['Error rates']
@@ -1029,6 +1035,7 @@ class Grammar:
         # LISTING PARAMETERS
         #string
         elif parameter == "useListedType":
+            #print(parameter, ' ', value)
             self.useListedType = value
             if value=="hidden_structure":
                 self.p_useListed = 3
@@ -1044,6 +1051,7 @@ class Grammar:
 
         #float 0 - 1
         elif parameter == "useListedRate":
+            #print(parameter, ' ', value)
             try:
                 self.useListedRate = float(value)
             except:
@@ -1051,6 +1059,7 @@ class Grammar:
                 self.p_useListed = 1
         #bool
         elif parameter == "flip":
+            #print(parameter, ' ', value)
             try:
                 self.flip = eval(value)
             except:
@@ -1059,6 +1068,7 @@ class Grammar:
         
         #bool
         elif parameter == "simpleListing":
+            #print(parameter, ' ', value)
             try:
                 self.simpleListing = eval(value)
             except:
@@ -1067,6 +1077,7 @@ class Grammar:
         
         #float 0-1
         elif parameter == "pToList":
+            #print(parameter, ' ', value)
             try:
                 self.pToList = float(value)
             except:
@@ -1077,6 +1088,7 @@ class Grammar:
         # INDEXATION PARAMETERS
         # int
         elif parameter == "nLexCs":
+            #print(parameter, ' ', value)
             try:
                 self.lexC_type = float(value)
             except:
@@ -1084,6 +1096,7 @@ class Grammar:
                 self.lexC_type = 0
         # float 0-1    
         elif parameter == "pChangeIndexation":
+            #print(parameter, ' ', value)
             try:
                 self.pChangeIndexation = float(value)
             except:
@@ -1091,6 +1104,7 @@ class Grammar:
                 self.pChangeIndexation = 0.75
         # float
         elif parameter == "lexCStartW":
+            #print(parameter, ' ', value)
             try:
                 self.lexCStartW = float(value)
             except:
@@ -1098,6 +1112,7 @@ class Grammar:
                 self.lexCStartW = 5.0
         # string - radioButton
         elif parameter == "locality":
+            #print(parameter, ' ', value)
             try:
                 self.localityRestrictionType = value
             except:
@@ -1105,6 +1120,7 @@ class Grammar:
                 self.localityRestrictionType = "overlap"
         # string - radioButton
         elif parameter == "first_index_strategy":
+            #print(parameter, ' ', value)
             try:
                 self.firstIndexStrat = value
             except:
@@ -1115,12 +1131,14 @@ class Grammar:
         # RST PARAMETERS
         # string - radioButton
         elif parameter == "PFC_type":
+            #print(parameter, ' ', value)
             self.PFC_type = value
             if self.PFC_type not in ["none","pseudo","full"]:
                 return "WARNING PFC_type must be one of 'none', 'pseudo' or 'full'.  Using default value 'none', no PFCs."
                 self.PFC_type = "none"
         # float > 0
         elif parameter == "PFC_lrate":
+            #print(parameter, ' ', value)
             try:
                 self.PFC_lrate = float(value)
             except:
@@ -1128,6 +1146,7 @@ class Grammar:
                 self.PFC_lrate = 0.1
         # float
         elif parameter == "PFC_startW":
+            #print(parameter, ' ', value)
             try:
                 self.PFC_startW = float(value)
             except:
@@ -2815,7 +2834,7 @@ class trainingData:
         self.sampler = [s / sum(self.sampler) for s in self.sampler]  # convert to a well-formed distribution
         
     # TODO do I have to worry about these getting too small
-        return "Success"
+
     def __str__(self):
         trainTags = []
         for i, k in zip(self.learnData, self.sampler):
