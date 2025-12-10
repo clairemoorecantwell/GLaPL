@@ -21,9 +21,6 @@ class Settings:
         self.frame = frame
         self.console = console
     def SettingsFrame(self):
-        # self.frame = frame
-        # self.root = root
-
         self.root.check_num_wrapper = (self.root.register(util.CheckNum),'%P')
         self.root.check_num_0to1_wrapper = (self.root.register(util.CheckNum0to1), '%P')
         self.root.check_numList_wrapper = (self.root.register(util.CheckNumList),'%P')
