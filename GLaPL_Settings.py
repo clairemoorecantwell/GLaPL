@@ -50,8 +50,6 @@ class Settings:
         self.settingsNotebook = ttk.Notebook(settingsFrame)
         self.settingsNotebook.pack(fill='both', expand=True)
         self.settingsNotebook.pressed_index = None
-        # self.settingsNotebook.config(width=600, height=200)
-        # self.settingsNotebook.grid(column=0, row=0, sticky=sticky)
     
         sticky = 'NW'
         maxColumn = 8
@@ -195,9 +193,7 @@ class Settings:
                 self.decayRateFrame, text=text, value=value, variable=self.decayRateRadio, command=lambda *args: g.setParam('decayType', self.decayRateRadio.get()))
             r.grid(column = decayColumn, row = nbRow, sticky = sticky, padx = 15)
             decayColumn += 1
-        # util.CreateRadio_setParam(util.Tkinter_Field_Settings(parent=self.decayRateFrame, dictionary=self.decayOptions, parameter='decayType', radioVariable=self.decayRateRadio, variableDefault='NoDecay', 
-        #                                                  variable=[self.decayRateNum], column=2, row=nbRow, sticky=sticky, padx=15, _list=self.decayRateRadioList))
-        #self.decayRateRadioList[0].config(command=lambda *args: g.setParam('decayType','L1'))
+
         self.decayRateRadio.set(g.decayType)
 
         nbRow += 1
@@ -552,8 +548,6 @@ class Settings:
         folderFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= 3, maxRow=maxRow, 
                                    column=0, row=gridRow, sticky=sticky, width=600, height=75))
     
-        # ttk.Frame(frame, borderwidth=0, width=600, height=75)
-        # folderFrame.grid(column=0, row=2, columnspan=3, sticky=sticky)
         wrapLength=300
         self.inputLabel = tk.Label(folderFrame, text='Training Data File')
         self.inputLabel.grid(column=0, row=gridRow, sticky=sticky)
@@ -623,11 +617,6 @@ class Settings:
         self.learnButton.place(anchor='center')
         self.learnButton.grid(column=2, row=gridRow, padx=12, pady=12, sticky=sticky)
 
-        # sample code for validating:
-        # for i in entries:
-        #    result = g.setParam(parameter,value)
-        #    if result:   
-        #          it's an error or warning
     def validate(self):
         d = {'trainingData': self.inputFile.get(),
                    'outfolder' : self.outputPath.get(),

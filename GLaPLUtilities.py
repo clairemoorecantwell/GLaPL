@@ -84,16 +84,6 @@ def CheckNumList(newVal):
             return False
     return True
 
-#not used
-def ValidateNum(self, input_text):
-    if not input_text:
-        return True
-    try:
-        float(input_text)
-        return True
-    except ValueError:
-        return False
-
 def GetEntryValue(val):
     value = val.get()
     print('Entry value:', value)
@@ -153,34 +143,6 @@ def ToggleWeightsEntries(fieldList, active):
             fieldList[i].config(state = tk.NORMAL)
         else:
             fieldList[i].config(state = tk.DISABLED)
-
-#not used - removing the command line prevents setting a default, it's also not able to intelligently not send a list for the values.
-def CreateRadio_setParam(args, expandX = bool(True)):
-    listItem = 0
-    print(args)
-    column = args.column
-    row = args.row
-    parameter = args.parameter
-    _list = args.list
-    for (text, value) in args.dictionary.items():
-        print(text, value)
-        commandVariable=args.variable[listItem]
-        variable=args.radioVariable
-        r = tk.Radiobutton(
-            args.parent,
-            text=text,
-            value=value,
-            variable=variable,
-            command=lambda *args: g.setParam(parameter, [variable.get(), commandVariable]))
-        r.grid(column=column, row=row, sticky=args.sticky, padx = args.padx, pady=args.pady, ipadx = args.ipadx, ipady = args.ipady)
-        #find a solution for passing two variables through
-        if (len(args.variable) > 1):
-            listItem += 1
-        if (expandX == True):
-            column += 1
-        else:
-            row += 1
-        _list.append(r)
 
 def CreateEntry(args, b = None, fieldList = None, greyOut = None, fieldEntryList = None):
     if (b == 0):
@@ -261,19 +223,6 @@ def SendParams(param, type, value, convertToFloats = False):
     if convertToFloats == True:
         value = value.split(",")
     g.setParam(param, [type, value])
-
-# def onNotebookTabChange(nb, nbScrollbars):
-#     print('tab ', nb.index('current'))
-#     nbActiveTab = nb.index('current')
-#     for i in range(len(nbScrollbars)):
-#         if i != nbActiveTab:
-#             print('hiding tab ', i, ' scrollbar: ', nbScrollbars[i])
-#             #nbScrollbars[i].grid_remove()
-#             nbScrollbars[i].grid_forget()
-#         else:
-#             print('restoring tab ', i, ' scrollbar: ', nbScrollbars[i])
-#             #nbScrollbars[i].grid()
-#             nbScrollbars[i].grid(column=8, row=0, sticky='NS')
 
 def resize_widgets(event, canvas, tag, width, height):
     canvas.itemconfigure(tag, height=height)
