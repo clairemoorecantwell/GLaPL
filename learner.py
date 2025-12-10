@@ -804,6 +804,11 @@ class Grammar:
         self.PFC_startW = 5.0
 
 
+
+    def copy(self):
+        g = Grammar()
+
+
     def checkParams(self):
 
         warnings = []
@@ -2641,7 +2646,8 @@ class PFC:  # Contains function(s) for calculating a PFC's violations
 
 class trainingData:
     '''essentially, a list of lexeme sets paired with correct surface forms, and frequencies '''
-
+    ''' TODO ensure that trainingData remains static throughout learning'''
+    
     def __init__(self, filename):
         self.lexicon = {}  # dictionary of {tag: lexeme}
         self.learnData = []  # each entry is a list: [lexemes,surface,input].  lexemes is itself a list, of all lexemes involved in the entry
