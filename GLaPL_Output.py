@@ -3,6 +3,7 @@ from tkinter import ttk
 import matplotlib
 import matplotlib.pyplot as plt
 import csv
+import numpy as np
 
 matplotlib.use('TkAgg')
 
@@ -11,6 +12,7 @@ from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg,
     NavigationToolbar2Tk
 )
+plt.style.use('_mpl-gallery')
 
 class Output:
     def __init__(self, root, frame):
@@ -32,25 +34,7 @@ class Output:
         notebook.add(errPercentFrame, text='error%')
         notebook.pack(fill='both', expand=True)
 
-        #demo:
-        #self.title('Tkinter Matplotlib Demo')
-
-        #prepare data
-        data = {
-            'Python': 11.27,
-            'C': 11.16,
-            'Java': 10.46,
-            'C++': 7.5,
-            'C#': 5.26
-        }
-        languages = data.keys()
-        popularity = data.values()
-
         output = dict()
-
-        names = []
-        vals = []
-        combined = [names, vals]
         keys = []
 
         with open('sample_output_file_weights.txt', 'r') as datafile:
@@ -61,24 +45,12 @@ class Output:
                     if count == 0:
                         output[row[i]] = [0]
                         keys.append(row[i])
-                    if count == 1:
+                    elif count == 1:
                         output[keys[i]] = [row[i]]
-                    if count >= 1:
+                    else:
                         output[keys[i]].append(row[i])
                 count +=1;
-                    # if count == 1:
-                    #     output[i]
-                # names.append(row[0][0])
-                # for i in range(len(row)):
-                    
-                #     if (i == 0):
-                #         vals.append(row[i])
-        
-        print(output)
-        print(names)
-        print(vals)
-        for col in range(len(names[0])):output[col[0]] = col[1:]
-        print(output)
+
          # create a figure
         figure = Figure(figsize=(6, 4), dpi=100)
 
@@ -91,8 +63,22 @@ class Output:
         # create axes
         axes = figure.add_subplot()
 
-        # create the barchart
-        axes.plot(languages, popularity)
+        x=[]
+        for i in range(len(output[keys[0]])):
+            x.append(i)
+        
+        # for k, v in output.items():
+
+        #     axes.stairs(v, linewidth=2.5)
+        
+        # axes.set(xlim=(0, len(x)), xticks=np.arange(1, len(x)),
+        #          ylim=(0, 5), yticks=np.arange(1, 5))
+        # axes.plot(constraints, values)
+        # axes.plot()
+
+        for k, v in output.items():
+            axes.plot(x, v)
+
         axes.set_title('Test')
         axes.set_ylabel('Weights')
         axes.set_xlabel('Epoch')
