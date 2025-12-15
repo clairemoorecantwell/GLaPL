@@ -12,7 +12,6 @@ from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg,
     NavigationToolbar2Tk
 )
-plt.style.use('_mpl-gallery')
 
 class Output:
     def __init__(self, root, frame):
@@ -46,13 +45,13 @@ class Output:
                         output[row[i]] = [0]
                         keys.append(row[i])
                     elif count == 1:
-                        output[keys[i]] = [row[i]]
+                        output[keys[i]] = [float(row[i])]
                     else:
-                        output[keys[i]].append(row[i])
+                        output[keys[i]].append(float(row[i]))
                 count +=1;
 
          # create a figure
-        figure = Figure(figsize=(6, 4), dpi=100)
+        figure = Figure(figsize=(6, 3.5), dpi=100)
 
         # create FigureCanvasTkAgg object
         figure_canvas = FigureCanvasTkAgg(figure, weightsGraphFrame)
@@ -66,22 +65,22 @@ class Output:
         x=[]
         for i in range(len(output[keys[0]])):
             x.append(i)
-        
-        # for k, v in output.items():
 
-        #     axes.stairs(v, linewidth=2.5)
-        
-        # axes.set(xlim=(0, len(x)), xticks=np.arange(1, len(x)),
-        #          ylim=(0, 5), yticks=np.arange(1, 5))
-        # axes.plot(constraints, values)
-        # axes.plot()
-
+        count = 0
+        maxVal = 0
         for k, v in output.items():
-            axes.plot(x, v)
-
+            axes.plot(x, v, label=keys[count])
+            m = max(v)
+            if m > maxVal:
+               maxVal = m
+            count +=1
+        axes.set(yticks=(np.arange(0.5, int(maxVal)+1, 0.5)))
         axes.set_title('Test')
         axes.set_ylabel('Weights')
         axes.set_xlabel('Epoch')
+        axes.set_ylim(ymin=0, ymax=int(maxVal)+1)
+        axes.legend(bbox_to_anchor=(1.05, 1),
+                         loc='upper left', borderaxespad=0.)
 
         figure_canvas.get_tk_widget()
 
