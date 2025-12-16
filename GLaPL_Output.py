@@ -51,7 +51,7 @@ class Output:
                 count +=1;
 
          # create a figure
-        figure = Figure(figsize=(6, 3.5), dpi=100)
+        figure = Figure(figsize=(6, 12), dpi=100, layout='constrained')
 
         # create FigureCanvasTkAgg object
         figure_canvas = FigureCanvasTkAgg(figure, weightsGraphFrame)
