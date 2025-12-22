@@ -74,8 +74,8 @@ class Output:
                         output[keys[i]].append(float(row[i]))
                 count +=1;
         self.output = output
-        self.weightsFilter = Output.GraphFilters(self, weightsFilterFrame, self.output)
-        self.weightAxes = Output.MakeGraph(self, weightsGraphFrame, self.output, self.weightsFilter)
+        self.weightsFilter = self.GraphFilters(self, weightsFilterFrame, self.output)
+        self.weightAxes = self.MakeGraph(self, weightsGraphFrame, self.output, self.weightsFilter)
     
     def GraphFilters(self, frame, d):
         label = tk.Label(frame, text='Filter Weights')
@@ -88,7 +88,7 @@ class Output:
         column = 0
         for option, value in filterDict.items():
             check_button = tk.Checkbutton(frame, text=option, variable=value, command=lambda *args: 
-                                          Output.UpdateAxes(self, self.weightAxes, d, filterDict))
+                                          self.UpdateAxes(self, self.weightAxes, d, filterDict))
             check_button.grid(column=column, row=row, sticky='NW')
             if column == 0:
                 column += 1
@@ -111,7 +111,7 @@ class Output:
         # create axes
         axes = figure.add_subplot()
         self.figure = figure
-        Output.UpdateAxes(self=self, axes=axes, d=d, filter=filter)
+        self.UpdateAxes(self=self, axes=axes, d=d, filter=filter)
 
         figure_canvas.get_tk_widget()
         figure_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)

@@ -610,10 +610,12 @@ class Settings:
         # collect all params and values in a dictionary and iterate through it and call setParam for each param / value pair
 
         self.learnButton = tk.Button(self.val_Learn_Frame, width=15, text='Learn', command=lambda *args: 
-                                     g.learn(float(self.totalIterationsNum.get()) / float(self.epochsNum.get()), float(self.epochsNum.get())))
+                                     self.runLearner(float(self.totalIterationsNum.get()), float(self.epochsNum.get())))
         self.learnButton.place(anchor='center')
         self.learnButton.grid(column=2, row=gridRow, padx=12, pady=12, sticky=sticky)
 
+    def runLearner(iterations, epochs):
+        g.learn(iterations / epochs, epochs)
     def validate(self):
         d = {'trainingData': self.inputFile.get(),
                    'outfolder' : self.outputPath.get(),
