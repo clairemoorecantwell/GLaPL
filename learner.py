@@ -1587,6 +1587,7 @@ class Grammar:
             print(printform.format(*[str(round(i,2)) for i in self.w])+Style.RESET_ALL)
 
 
+            # Results: create results dictionaries and maybe also print to file
             self.predict(outFilename+str(n)+".txt")
             
             with open(errRatesFilename+str(n)+".txt","w") as f:
@@ -1658,6 +1659,16 @@ class Grammar:
                         f.write("\n")
                         f.write("\t".join([str(i) for i in theRow]))
 
+
+            self.weightsHistory = {}
+            #1. transpose grammar_constraints_w
+            newWeightsHistory = []*len(grammar_constraints_w[0])
+            for t in grammar_constraints_w:
+                for i in range(0,len(grammar_constraints_w[0])):
+                    newWeightsHistory[i].append(t[i])
+            for i in range(0,self.trainingData.constraintNames):
+                c = self.trainingData.constraintNames[i]
+                self.weightsHistory[c]=newWeightsHistory[i]
 
             with open(weightsFilename+str(n)+".txt", "w") as f:
                 #print(grammar_constraints_w)
