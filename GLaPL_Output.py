@@ -20,7 +20,7 @@ class Output:
         self.root = root
     def OutputFrame(self):
         width = 1280*.475-100
-        height = 720 / 2
+        height = 720/2
         notebook = ttk.Notebook(self.frame, width=width, height=height)
 
         weightsContentFrame = tk.Frame(notebook)
@@ -37,20 +37,22 @@ class Output:
         
         self.errPercentFrame = errPercentFrame
 
-        height = 600
+        height = 900
         width = width
         weightsCanvas = tk.Canvas(weightsContentFrame, width=width, height=height)
         weightsScroll = tk.Scrollbar(weightsContentFrame, command=weightsCanvas.yview)
-        weightsCanvas.config(yscrollcommand=weightsScroll.set, scrollregion=(0,0,width, 300))
-        
-        weightsFilterFrame = tk.Frame(weightsCanvas)
-        weightsGraphFrame = tk.Frame(weightsCanvas)
-        
-        weightsCanvas.create_window(10, 10, anchor='nw', window=weightsGraphFrame)
+        weightsCanvas.config(yscrollcommand=weightsScroll.set, scrollregion=(0,0,width, 1200))
         weightsCanvas.pack(side='left', fill='both', expand=True)
         weightsScroll.pack(side='right', fill='y')
-        weightsFilterFrame.pack(side='left', fill='both', expand=True)
-        weightsGraphFrame.pack(side='left', fill='both', expand=True)
+        weightsFrame = tk.Frame(weightsCanvas, width=width, height=600)
+        weightsFrame.pack(fill='both', expand=True)
+        weightsFilterFrame = tk.Frame(weightsFrame)
+        weightsGraphFrame = tk.Frame(weightsFrame)
+        
+        weightsCanvas.create_window(10, 10, anchor='nw', window=weightsFrame)
+        
+        weightsFilterFrame.pack(side='top', fill='both', expand=True)
+        weightsGraphFrame.pack(side='bottom', fill='both', expand=True)
         
         self.weightsContentFrame = weightsContentFrame
         self.weightsCanvas = weightsCanvas
@@ -91,7 +93,7 @@ class Output:
     def MakeGraph(self, frame, d, filter):
         
         # create a figure
-        figure = Figure(figsize=(6, 24), dpi=100, layout='constrained')
+        figure = Figure(figsize=(6, 8), dpi=100, layout='constrained')
 
         # create FigureCanvasTkAgg object
         figure_canvas = FigureCanvasTkAgg(figure, frame)

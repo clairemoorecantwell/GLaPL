@@ -46,13 +46,13 @@ width = 1280
 height = 720
 content = util.CreateFrame(util.Tkinter_Field_Settings(root, ipadx = 6, ipady = 6, column=0, row=0, maxColumn=1, maxRow=1, width=width, height=height, sticky='NSEW'))
 settingsFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge', column=0, row=0, maxColumn=1, maxRow=1, 
-                                                             columnSpan=1, rowSpan= 2, width=width*.525, height=height, sticky='NSEW'))
+                                                             columnSpan=1, rowSpan= 2, width=width*.525, height=height, sticky='NSEW', weightx=1, weighty=1))
 #settingsFrame.grid(column=0, row=0, columnspan=3, sticky='NSEW')
 outputFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge', column=1, row=0, maxColumn=1, maxRow=1, 
-                                                           columnSpan=1, rowSpan = 1, width=width*.475, height=height / 2, sticky='NSEW'))
+                                                           columnSpan=1, rowSpan = 1, width=width*.475, height=height / 2, sticky='NSEW', weightx=2, weighty=1))
 #outputFrame.grid(column=3, row=0, columnspan=3, sticky='NSEW')
 consoleFrame = util.CreateFrame(util.Tkinter_Field_Settings(content, borderWidth=5, relief='ridge', column=1, row=1, maxColumn=1, maxRow=1, 
-                                                            columnSpan=1, rowSpan = 1, width=width*.475, height=height / 2, sticky='NSEW'))
+                                                            columnSpan=1, rowSpan = 1, width=width*.475, height=height / 2, sticky='NSEW', weightx=2, weighty=1))
 #consoleFrame.grid(column=3, row=1, columnspan=3, sticky='NSEW')
 
 root.columnconfigure(0, weight=1)
