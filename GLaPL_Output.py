@@ -78,16 +78,23 @@ class Output:
         self.weightAxes = Output.MakeGraph(self, weightsGraphFrame, self.output, self.weightsFilter)
     
     def GraphFilters(self, frame, d):
+        label = tk.Label(frame, text='Filter Weights')
+        label.grid(column = 0, row = 0, sticky = 'NW')
         #create dict
         filterDict = dict()
         for k, v in d.items():
             filterDict[k] = tk.BooleanVar(value=True)
-        row = 0
+        row = 1
+        column = 0
         for option, value in filterDict.items():
             check_button = tk.Checkbutton(frame, text=option, variable=value, command=lambda *args: 
                                           Output.UpdateAxes(self, self.weightAxes, d, filterDict))
-            check_button.grid(column=0, row=row, sticky='NW')
-            row += 1
+            check_button.grid(column=column, row=row, sticky='NW')
+            if column == 0:
+                column += 1
+            else:
+                column = 0
+                row += 1
         return filterDict
 
     def MakeGraph(self, frame, d, filter):
@@ -126,7 +133,7 @@ class Output:
                    maxVal = m
         axes.set(yticks=(np.arange(0.5, int(maxVal)+1, 0.5)))
         axes.set_ylim(ymin=0, ymax=int(maxVal)+1)
-        axes.set_title('Test')
+        axes.set_title('Results')
         axes.set_ylabel('Weights')
         axes.set_xlabel('Epoch')
         axes.legend(bbox_to_anchor=(0, -0.25),
