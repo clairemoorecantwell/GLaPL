@@ -873,31 +873,36 @@ class Grammar:
 
 
     def setParam(self,parameter, value):
-        print(parameter, value)
+        #print('param: ', parameter, value)
         # FILE HANDLING
         if parameter=="trainingData": 
             try:
                 self.trainingData = trainingData(value)
-            except:
-                return "ERROR: Training data not read in! Please check the file format and location."
+                print (self.trainingData)
+                return value
+            except Exception as e:
+                return str(e)
 
         elif parameter == "outfolder": 
             try:
                 self.outfolder = value
                 if not os.path.exists(self.outfolder):
                     os.makedirs(self.outfolder)
+                return value
             except: 
                 return "ERROR: Output folder not accessible"
 
         elif parameter=="logFile": 
             try:
                 self.logFile = value
+                return value
             except:
                 return "WARNING: logfile not set. Using previous value of "+ self.logfile
 
         elif parameter == "label":
             try:
                 self.label = value
+                return value
             except:
                 return "WARNING: output label not set. Using previous value of "+ self.label
 
@@ -973,6 +978,7 @@ class Grammar:
             try:
                 self.featureSet = Features(value)
                 self.featuresFileName = value
+                return value
             except:
                 self.featureSet = None
                 return "ERROR: Your feature set file, " + value + " did not work. No features read in."
@@ -990,6 +996,7 @@ class Grammar:
                 constraints = importlib.import_module(value)
                 self.constraintsModule = value
                 self.constraints = constraints.constraints
+                return value
             except:
                 return "ERROR: Your constraints module file, " + value + " did not work. No constraints or operations read in."
 
@@ -998,8 +1005,10 @@ class Grammar:
             try:
                 self.addViolations = eval(value)
             except:
-                return "WARNING: addViolations must be set to 'True' or 'False'. Using previous value of " + str(self.addViolations)
+                # Mike: setting to false as a default per the error message
                 self.addViolations = False
+                return "WARNING: addViolations must be set to 'True' or 'False'. Using previous value of " + str(self.addViolations)
+                
 
 
         # LEARNING REPORTING PARAMETERS
@@ -1008,8 +1017,10 @@ class Grammar:
             try:
                 self.noisy = eval(value)
             except:
-                return "WARNING: value for 'noisy' could not be converted to bool. Using previous value of " + str(self.noisy)
+                # Mike: setting to false as a default per the error message
                 self.noisy = False
+                return "WARNING: value for 'noisy' could not be converted to bool. Using previous value of " + str(self.noisy)
+                
 
         elif parameter == "filesToSave":
             #print(value)
@@ -1041,8 +1052,10 @@ class Grammar:
             elif value=="none":
                 self.p_useListed = 0
             else:
-                return "WARNING: value for 'useListedType' is unrecognized.  Using default value, no lexical listing."
+                # Mike: setting p_useListed to 0 per the error message
                 self.p_useListed = 0
+                return "WARNING: value for 'useListedType' is unrecognized.  Using default value, no lexical listing."
+                
 
         #float 0 - 1
         elif parameter == "useListedRate":
@@ -1050,16 +1063,20 @@ class Grammar:
             try:
                 self.useListedRate = float(value)
             except:
-                return "WARNING: useListedRate cannot be converted to float.  Using default value of 1, always use listed form if available."
+                # Mike: setting p_useListed to 1 per the error message
                 self.p_useListed = 1
+                return "WARNING: useListedRate cannot be converted to float.  Using default value of 1, always use listed form if available."
+                
         #bool
         elif parameter == "flip":
             #print(parameter, ' ', value)
             try:
                 self.flip = eval(value)
             except:
-                return "WARNING: flip must be True or False.  Using default of False."
+                # Mike: setting to false as a default per the error message
                 self.flip = False
+                return "WARNING: flip must be True or False.  Using default of False."
+                
         
         #bool
         elif parameter == "simpleListing":
@@ -1067,8 +1084,10 @@ class Grammar:
             try:
                 self.simpleListing = eval(value)
             except:
-                return "WARNING: simpleListing must be True or False.  Using default value of True."
+                # Mike: setting to false as a default per the error message
                 self.simpleListing = True
+                return "WARNING: simpleListing must be True or False.  Using default value of True."
+                
         
         #float 0-1
         elif parameter == "pToList":
@@ -1076,8 +1095,10 @@ class Grammar:
             try:
                 self.pToList = float(value)
             except:
-                return "WARNING: pToList could not be converted to float.  Using default value of 0.75"
+                # Mike: setting pToList to 0.75 per the error message
                 self.pToList = 0.75
+                return "WARNING: pToList could not be converted to float.  Using default value of 0.75"
+                
         
 
         # INDEXATION PARAMETERS
@@ -1087,40 +1108,50 @@ class Grammar:
             try:
                 self.lexC_type = float(value)
             except:
-                return "WARNING: nLexCs could not be converted to float. Not using Lexically indexed constraints."
+                # Mike: setting lexC_type to 0 per the error message
                 self.lexC_type = 0
+                return "WARNING: nLexCs could not be converted to float. Not using Lexically indexed constraints."
+                
         # float 0-1    
         elif parameter == "pChangeIndexation":
             #print(parameter, ' ', value)
             try:
                 self.pChangeIndexation = float(value)
             except:
-                return "\nWARNING: pChangeIndexation could not be converted to float.  Using default value of 0.75"
+                # Mike: setting pChangeIndexation to 0.75 per the error message
                 self.pChangeIndexation = 0.75
+                return "\nWARNING: pChangeIndexation could not be converted to float.  Using default value of 0.75"
+                
         # float
         elif parameter == "lexCStartW":
             #print(parameter, ' ', value)
             try:
                 self.lexCStartW = float(value)
             except:
-                return "WARNING: lexCStartW could not be converted to float.  Using default value of 5.0"
+                # Mike: setting lexCStartW to 5.0 per the error message
                 self.lexCStartW = 5.0
+                return "WARNING: lexCStartW could not be converted to float.  Using default value of 5.0"
+                
         # string - radioButton
         elif parameter == "locality":
             #print(parameter, ' ', value)
             try:
                 self.localityRestrictionType = value
             except:
-                return "WARNING: localityRestrictionType not assigned.  Using default value of 'overlap'"
+                # Mike: setting localityRestrictionType to overlap per the error message
                 self.localityRestrictionType = "overlap"
+                return "WARNING: localityRestrictionType not assigned.  Using default value of 'overlap'"
+                
         # string - radioButton
         elif parameter == "first_index_strategy":
             #print(parameter, ' ', value)
             try:
                 self.firstIndexStrat = value
             except:
-                return "WARNING: first_index_strategy not recognized.  Using default of 'lowest'"
+                # Mike: setting firstIndexStrat to lowest per the error messsage
                 self.firstIndexStrat = "lowest"
+                return "WARNING: first_index_strategy not recognized.  Using default of 'lowest'"
+                
 
 
         # RST PARAMETERS
@@ -1129,24 +1160,30 @@ class Grammar:
             #print(parameter, ' ', value)
             self.PFC_type = value
             if self.PFC_type not in ["none","pseudo","full"]:
-                return "WARNING PFC_type must be one of 'none', 'pseudo' or 'full'.  Using default value 'none', no PFCs."
+                # Mike: setting PFC_type to none per the error message
                 self.PFC_type = "none"
+                return "WARNING PFC_type must be one of 'none', 'pseudo' or 'full'.  Using default value 'none', no PFCs."
+                
         # float > 0
         elif parameter == "PFC_lrate":
             #print(parameter, ' ', value)
             try:
                 self.PFC_lrate = float(value)
             except:
-                return "WARNING: PFC_lrate could not be converted to float.  Using default value of 0.1"
+                # Mike: setting PFC_lrate to 0.1 per the error message
                 self.PFC_lrate = 0.1
+                return "WARNING: PFC_lrate could not be converted to float.  Using default value of 0.1"
+                
         # float
         elif parameter == "PFC_startW":
             #print(parameter, ' ', value)
             try:
                 self.PFC_startW = float(value)
             except:
-                return "WARNING: PFC_startW could not be converted to float.  Using default value of 5.0"
+                # Mike: setting PFC_startW to 5.0 per the error message
                 self.PFC_startW = 5.0
+                return "WARNING: PFC_startW could not be converted to float.  Using default value of 5.0"
+                
 
 
         # GSR's (not using currently)

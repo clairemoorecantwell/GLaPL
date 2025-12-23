@@ -20,6 +20,7 @@ class Settings:
         self.root = root
         self.frame = frame
         self.console = console
+        self.validated = False
     def SettingsFrame(self):
         self.root.check_num_wrapper = (self.root.register(util.CheckNum),'%P')
         self.root.check_num_0to1_wrapper = (self.root.register(util.CheckNum0to1), '%P')
@@ -213,7 +214,7 @@ class Settings:
         self.thresholdNum = tk.StringVar(value = g.comparisonThreshold)
         self.thresholdFrame = util.CreateFrame(util.Tkinter_Field_Settings(parent=self.advancedFrame, maxColumn=maxColumn, columnSpan= 8, 
                                                                           column=0, row=nbRow, sticky=sticky))
-        self.thresholdEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=self.thresholdFrame, text='threshold', column=1, row=nbRow, sticky=sticky, 
+        self.thresholdEntry = util.CreateEntry([util.Tkinter_Field_Settings(parent=self.thresholdFrame, text='Threshold', column=1, row=nbRow, sticky=sticky, 
                                                                   variable=self.thresholdNum, command = self.root.check_num_wrapper)])
         self.thresholdEntry.bind('<Return>', lambda *args: g.setParam("threshold", float(self.thresholdNum.get())))
     
@@ -227,7 +228,7 @@ class Settings:
         self.featureFile = tk.StringVar(value=g.featureSet)
         self.featureInputButton = tk.Button(self.featureSetFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('featureSet', self.featureMessage, self.featureFile)) 
         self.featureInputButton.grid(column=1, row=nbRow, sticky=sticky)
-        self.featureInputMessage = tk.Label(self.featureSetFrame, textvariable=self.featureMessage, wraplength=wrapLength)
+        self.featureInputMessage = tk.Label(self.featureSetFrame, textvariable=self.featureFile, wraplength=wrapLength)
         self.featureInputMessage.grid(column=2, row=nbRow, sticky=sticky)
 
         nbRow += 1
@@ -245,7 +246,7 @@ class Settings:
         self.constraintinputLabel = tk.Label(self.constraintsFrame, text='Constraints Set File')
         self.constraintinputLabel.grid(column=0, row=nbRow, sticky=sticky)
         self.constraintsMessage = tk.StringVar()
-        self.constraintsFile = tk.StringVar(value=g.constraintsModule)
+        self.constraintsFile = tk.StringVar()
         self.constraintInputButton = tk.Button(self.constraintsFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('Constraints', self.constraintsMessage, self.constraintsFile)) 
         self.constraintInputButton.grid(column=1, row=nbRow, sticky=sticky)
         self.constraintInputMessage = tk.Label(self.constraintsFrame, textvariable=self.constraintsMessage, wraplength=wrapLength)
@@ -548,20 +549,21 @@ class Settings:
         wrapLength=300
         self.inputLabel = tk.Label(folderFrame, text='Training Data File')
         self.inputLabel.grid(column=0, row=gridRow, sticky=sticky)
-        self.message = tk.StringVar()
+        self.inputFileMessage = tk.StringVar()
         self.inputFile = tk.StringVar(value=g.trainingData)
-        self.inputButton = tk.Button(folderFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('trainingData', self.message, self.inputFile)) 
+        self.inputButton = tk.Button(folderFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('trainingData', self.inputFileMessage, self.inputFile)) 
         self.inputButton.grid(column=1, row=gridRow, sticky=sticky)
-        self.inputMessage = tk.Label(folderFrame, textvariable=self.inputFile, wraplength=wrapLength)
+        self.inputMessage = tk.Label(folderFrame, textvariable=self.inputFileMessage, wraplength=wrapLength)
         self.inputMessage.grid(column=2, row=gridRow, sticky=sticky)
 
         gridRow += 1
         self.outputFolder = tk.Label(folderFrame, text='Output Folder')
         self.outputFolder.grid(column=0, row=gridRow, sticky=sticky)
+        self.outputMessage = tk.StringVar()
         self.outputPath = tk.StringVar(value=g.outfolder)
-        self.outputFolderButton = tk.Button(folderFrame, width=15, text='Select Folder', command=lambda *args : util.GetDirectory(self.outputPath)) 
+        self.outputFolderButton = tk.Button(folderFrame, width=15, text='Select Folder', command=lambda *args : util.SetDirectory('outfolder', self.outputMessage, self.outputPath)) 
         self.outputFolderButton.grid(column=1, row=gridRow, sticky=sticky)
-        self.outputFolderName = tk.Label(folderFrame, textvariable=self.outputPath, wraplength=wrapLength)
+        self.outputFolderName = tk.Label(folderFrame, textvariable=self.outputMessage, wraplength=wrapLength)
         self.outputFolderName.grid(column=2, row=gridRow, sticky=sticky)
     
         # REPORTING PARAMS
@@ -604,7 +606,7 @@ class Settings:
         self.val_Learn_Frame = util.CreateFrame(util.Tkinter_Field_Settings(parent=contentSettingsFrame, maxColumn=maxColumn, columnSpan= 3, maxRow=maxRow, 
                                    column=0, row=gridRow, sticky=sticky, width=600, height=200))
         
-        self.validateButton = tk.Button(self.val_Learn_Frame, width=15, text='Validate', command=lambda *args: Settings.validate(self))
+        self.validateButton = tk.Button(self.val_Learn_Frame, width=15, text='Validate', command=lambda *args: self.validate())
         self.validateButton.place(anchor='center')
         self.validateButton.grid(column=0, row=gridRow, padx=12, pady=12, sticky=sticky)
         # collect all params and values in a dictionary and iterate through it and call setParam for each param / value pair
@@ -614,9 +616,18 @@ class Settings:
         self.learnButton.place(anchor='center')
         self.learnButton.grid(column=2, row=gridRow, padx=12, pady=12, sticky=sticky)
 
-    def runLearner(iterations, epochs):
-        g.learn(iterations / epochs, epochs)
+    def runLearner(self, iterations, epochs):
+        if self.validated:
+            g.learn(iterations / epochs, epochs)
+        else:
+            msg = tk.messagebox.askyesno(title='Requires Valid Configuration', 
+                                          message='A valid configuration is required, \nValidate the configuration and run the learner?')
+            if msg == True:
+                self.validate()
+                if self.validated:
+                    self.runLearner(iterations, epochs)
     def validate(self):
+        self.validated = True
         d = {'trainingData': self.inputFile.get(),
                    'outfolder' : self.outputPath.get(),
                    'threshold' : self.thresholdNum.get(),
@@ -661,5 +672,5 @@ class Settings:
         for k, v in d.items():
             m = g.setParam(k, v)
             if m != None:
+                self.validated = False
                 self.console.updateProgress(m)
-        return l

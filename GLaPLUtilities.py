@@ -91,9 +91,11 @@ def GetEntryValue(val):
 def ShowSelectedDecayRate(val):
     showinfo(title='DecayRate', message=val.get())
 
-def GetDirectory(value):
+def SetDirectory(param, m, d):
     folder = filedialog.askdirectory(initialdir= '.\\')
-    value.set(folder)
+    d.set(folder)
+    x = g.setParam(param, d.get())
+    m.set(x)
 
 def ReadTrainingData(param, m, f):
     filename = filedialog.askopenfilename(initialdir= '.\\')
