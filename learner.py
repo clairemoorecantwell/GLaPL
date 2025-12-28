@@ -1538,8 +1538,9 @@ class Grammar:
         self.listingFilename = self.outfolder+'/'+"listing_"+self.label+"_"
 
 
-        with open(runSummaryFilename,"w") as f:
-            f.write('\t'.join(self.trainingData.constraintNames+["SSE","logLikelihood","errorRate"]))
+        self.lexicon = self.trainingData.lexicon.copy()
+        #with open(runSummaryFilename,"w") as f:
+        #    f.write('\t'.join(self.trainingData.constraintNames+["SSE","logLikelihood","errorRate"]))
 
         for n in range(0,nRuns):
 
@@ -1561,8 +1562,6 @@ class Grammar:
             endLearningRate = float(self.learningRate[1])
             learningRateDecrement = (startLearningRate - endLearningRate)/nEpochs
             currentLearningRate = startLearningRate
-
-
 
             # tracking error rates each epoch
             last10PerErr = 0
@@ -2709,7 +2708,7 @@ class PFC:  # Contains function(s) for calculating a PFC's violations
 class trainingData:
     '''essentially, a list of lexeme sets paired with correct surface forms, and frequencies '''
 
-    def __init__(self, filename):
+    def __init__(self, filename=None):
         self.lexicon = {}  # dictionary of {tag: lexeme}
         self.learnData = []  # each entry is a list: [lexemes,surface,input].  lexemes is itself a list, of all lexemes involved in the entry
         self.sampler = []  # summed to 1, sampler for each learnData entry
@@ -2728,9 +2727,9 @@ class trainingData:
         specialLex = False
 
         try:
-            f = open(filename, "r")
+            f = open(self.filename, "r")
         except:
-            return "ERROR: unable to read input file " + filename
+            return "ERROR: unable to read input file " + self.filename
         lines = f.readlines()
         header = lines[0].split('\t')
         header = [label.strip() for label in header]
@@ -3055,6 +3054,10 @@ def distSegs(s1, s2):  # distance = n features that are different
         dist = "ERROR"
     return dist, s1_not_s2, s2_not_s1
 
+#sampleGrammar = Grammar()
+#tr = trainingData()
+#
+#sampleGrammar.trainingData = trainingData()
 
 def exampleCand2():
     seg1 = [(0, "back"), (1, "high"), (1, "front"), (0, "low")]  # i
