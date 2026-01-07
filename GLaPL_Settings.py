@@ -656,7 +656,9 @@ class Settings:
         #         for i in range(0, len(keys)):
         #             d[keys[i]].append = l[i]
         # print (d)
-        self.output.GenerateGraph(d)
+        print(g.error_rate)
+        self.output.GenerateWeightsGraph(d)
+        self.output.GenerateErrGraph(g.error_rate)
     def validate(self):
         self.validated = True
         self.saveTypesDict = util.TKDictToDict(self.saveTypesTKDict)

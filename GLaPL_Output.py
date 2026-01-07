@@ -26,16 +26,16 @@ class Output:
         weightsContentFrame = tk.Frame(notebook)
         weightsContentFrame.pack(fill='both', expand=True)
 
-        errPercentFrame = tk.Frame(notebook)
-        errPercentFrame.pack(fill='both', expand=True)
+        errContentFrame = tk.Frame(notebook)
+        errContentFrame.pack(fill='both', expand=True)
 
         notebook.add(weightsContentFrame, text='Weights')
-        notebook.add(errPercentFrame, text='error%')
+        notebook.add(errContentFrame, text='error%')
         notebook.pack(fill='both', expand=True)
 
         self.notebook = notebook
         
-        self.errPercentFrame = errPercentFrame
+        
 
         height = 900
         width = width
@@ -60,6 +60,26 @@ class Output:
         self.weightsCanvas = weightsCanvas
         self.weightsGraphFrame = weightsGraphFrame
 
+
+        errCanvas = tk.Canvas(errContentFrame, width=width, height=height)
+        errScroll = tk.Scrollbar(errContentFrame, command=errCanvas.yview)
+        errCanvas.config(yscrollcommand=errScroll.set, scrollregion=(0,0,width, 600))
+        errCanvas.pack(side='left', fill='both', expand=True)
+        errScroll.pack(side='right', fill='y')
+        errFrame = tk.Frame(errCanvas, width=width, height=600)
+        errFrame.pack(fill='both', expand=True)
+        #errFilterFrame = tk.Frame(errFrame)
+        errGraphFrame = tk.Frame(errFrame)
+        
+        errCanvas.create_window(10, 10, anchor='nw', window=errFrame)
+        
+        #errFilterFrame.pack(side='top', fill='both', expand=True)
+        errGraphFrame.pack(side='bottom', fill='both', expand=True)
+        self.errContentFrame = errContentFrame
+        self.errGraphFrame = errGraphFrame
+        self.errContentFrame = errContentFrame
+        self.errCanvas = errCanvas
+        self.errGraphFrame = errGraphFrame
         # output = dict()
         # keys = []
         # with open('sample_output_file_weights.txt', 'r') as datafile:
@@ -78,9 +98,11 @@ class Output:
         # self.output = output
         # self.GenerateGraph(self.output)
     
-    def GenerateGraph(self, d):
+    def GenerateErrGraph(self, d):
+        self.errAxes = self.MakeGraph(self.errGraphFrame, d, title='ErrorRate', xlabel='Epoch', ylabel='ErrorRate', filter=None, xsize=5, ysize=4)
+    def GenerateWeightsGraph(self, d):
         self.weightsFilter = self.GraphFilters(self.weightsFilterFrame, d)
-        self.weightAxes = self.MakeGraph(self.weightsGraphFrame, d, self.weightsFilter)
+        self.weightAxes = self.MakeGraph(self.weightsGraphFrame, d, title='Results', xlabel='Epoch', ylabel='Weights', filter=self.weightsFilter, xsize=5, ysize=8)
     
     def ConvertToDict(self, l):
         output = dict()
@@ -108,7 +130,7 @@ class Output:
         column = 0
         for option, value in filterDict.items():
             check_button = tk.Checkbutton(frame, text=option, variable=value, command=lambda *args: 
-                                          self.UpdateAxes(self.weightAxes, d, filterDict))
+                                          self.UpdateAxes(self.weightAxes, d, title='Results', xlabel='Epoch', ylabel='Weights', filter=filterDict))
             check_button.grid(column=column, row=row, sticky='NW')
             if column == 0:
                 column += 1
@@ -117,10 +139,10 @@ class Output:
                 row += 1
         return filterDict
 
-    def MakeGraph(self, frame, d, filter):
+    def MakeGraph(self, frame, d, title, xlabel, ylabel, filter, xsize = 6, ysize = 8):
         
         # create a figure
-        figure = Figure(figsize=(6, 8), dpi=100, layout='constrained')
+        figure = Figure(figsize=(xsize, ysize), dpi=100, layout='constrained')
 
         # create FigureCanvasTkAgg object
         figure_canvas = FigureCanvasTkAgg(figure, frame)
@@ -131,13 +153,13 @@ class Output:
         # create axes
         axes = figure.add_subplot()
         self.figure = figure
-        self.UpdateAxes(axes=axes, d=d, filter=filter)
+        self.UpdateAxes(axes=axes, d=d, title=title, xlabel=xlabel, ylabel=ylabel, filter=filter)
 
         figure_canvas.get_tk_widget()
         figure_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         return axes
 
-    def UpdateAxes(self, axes, d, filter):
+    def UpdateAxes(self, axes, d, title, xlabel, ylabel, filter):
         axes.clear()
         keys = list(d.keys())
         x=[]
@@ -145,17 +167,24 @@ class Output:
             x.append(i)
 
         maxVal = 0
-        for k, v in d.items():
-            if filter[k].get() == True:
+        if filter is not None:
+            for k, v in d.items():
+                if filter[k].get() == True:
+                    axes.plot(x, v, label=k)
+                    m = max(v)
+                    if m > maxVal:
+                       maxVal = m
+        else:
+            for k, v in d.items():
                 axes.plot(x, v, label=k)
                 m = max(v)
                 if m > maxVal:
-                   maxVal = m
+                    maxVal = m
         axes.set(yticks=(np.arange(0.5, int(maxVal)+1, 0.5)))
         axes.set_ylim(ymin=0, ymax=int(maxVal)+1)
-        axes.set_title('Results')
-        axes.set_ylabel('Weights')
-        axes.set_xlabel('Epoch')
+        axes.set_title(title)
+        axes.set_ylabel(ylabel)
+        axes.set_xlabel(xlabel)
         axes.legend(bbox_to_anchor=(0, -0.25),
                      loc='upper left', borderaxespad=0.)
         #self.figure.legend(loc='outside lower left', borderaxespad=0.)

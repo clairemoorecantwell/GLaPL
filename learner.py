@@ -1763,7 +1763,9 @@ class Grammar:
         #     f.write(str(self.PFC_startW)+'\t')
         self.weights_output = [self.trainingData.constraintNames] + grammar_constraints_w
         # self.weights_output.append(grammar_constraints_w)
-        self.error_rate = rate
+        error_rate=dict()
+        error_rate['ErrorRates'] = rates
+        self.error_rate = error_rate
 
     def predict(self,outputName="output.txt",newInputName = "newInput.txt"):
         # saving all tableau to output file
