@@ -99,10 +99,14 @@ class Output:
         # self.GenerateGraph(self.output)
     
     def GenerateErrGraph(self, d):
-        self.errAxes = self.MakeGraph(self.errGraphFrame, d, title='ErrorRate', xlabel='Epoch', ylabel='ErrorRate', filter=None, xsize=5, ysize=4)
+        for widget in self.errGraphFrame.winfo_children():
+            widget.destroy()
+        self.errAxes, self.errFigure = self.MakeGraph(self.errGraphFrame, d, title='ErrorRate', xlabel='Epoch', ylabel='ErrorRate', filter=None, xsize=5, ysize=4)
     def GenerateWeightsGraph(self, d):
+        for widget in self.weightsGraphFrame.winfo_children():
+            widget.destroy()
         self.weightsFilter = self.GraphFilters(self.weightsFilterFrame, d)
-        self.weightAxes = self.MakeGraph(self.weightsGraphFrame, d, title='Results', xlabel='Epoch', ylabel='Weights', filter=self.weightsFilter, xsize=5, ysize=8)
+        self.weightAxes, self.weightFigure = self.MakeGraph(self.weightsGraphFrame, d, title='Results', xlabel='Epoch', ylabel='Weights', filter=self.weightsFilter, xsize=5, ysize=8)
     
     def ConvertToDict(self, l):
         output = dict()
@@ -130,7 +134,7 @@ class Output:
         column = 0
         for option, value in filterDict.items():
             check_button = tk.Checkbutton(frame, text=option, variable=value, command=lambda *args: 
-                                          self.UpdateAxes(self.weightAxes, d, title='Results', xlabel='Epoch', ylabel='Weights', filter=filterDict))
+                                          self.UpdateAxes(self.weightAxes, d, title='Results', xlabel='Epoch', ylabel='Weights', filter=filterDict, figure=self.weightFigure))
             check_button.grid(column=column, row=row, sticky='NW')
             if column == 0:
                 column += 1
@@ -152,14 +156,13 @@ class Output:
 
         # create axes
         axes = figure.add_subplot()
-        self.figure = figure
-        self.UpdateAxes(axes=axes, d=d, title=title, xlabel=xlabel, ylabel=ylabel, filter=filter)
+        self.UpdateAxes(axes=axes, d=d, title=title, xlabel=xlabel, ylabel=ylabel, filter=filter, figure=figure)
 
         figure_canvas.get_tk_widget()
         figure_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-        return axes
+        return axes, figure
 
-    def UpdateAxes(self, axes, d, title, xlabel, ylabel, filter):
+    def UpdateAxes(self, axes, d, title, xlabel, ylabel, filter, figure):
         axes.clear()
         keys = list(d.keys())
         x=[]
@@ -188,4 +191,4 @@ class Output:
         axes.legend(bbox_to_anchor=(0, -0.25),
                      loc='upper left', borderaxespad=0.)
         #self.figure.legend(loc='outside lower left', borderaxespad=0.)
-        self.figure.canvas.draw()
+        figure.canvas.draw()
