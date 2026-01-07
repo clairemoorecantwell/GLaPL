@@ -6,6 +6,7 @@ from tkinter import filedialog
 import re
 from venv import create
 import sys
+import GLaPL_Output as output
 import learner as l
 import GLaPLUtilities as util
 import GLaPL_Console as console
@@ -15,11 +16,12 @@ platform = sys.platform
 
 class Settings:
     self = None
-    def __init__(self, root, frame, console):
+    def __init__(self, root, frame, console, output):
         self = self
         self.root = root
         self.frame = frame
         self.console = console
+        self.output = output
         self.validated = False
     def SettingsFrame(self):
         self.root.check_num_wrapper = (self.root.register(util.CheckNum),'%P')
@@ -628,6 +630,33 @@ class Settings:
         #         self.validate()
         #         if self.validated:
         #             self.runLearner(iterations, epochs)
+        d = dict()
+        keys = g.weights_output.pop(0)
+        transpose = [[] for l in range(0, len(keys))]
+        for i in range(0, len(g.weights_output)):
+            for j in range(0, len(keys)):
+                 transpose[j].append(g.weights_output[i][j])
+        print(transpose)
+        for i in range(0, len(keys)):
+            d[keys[i]] = transpose[i]
+        print (d)
+        # count = 0
+        # for r in range(0,len(g.weights_output)):
+        #     if count == 0:
+        #         for i in range(0, len(r)):
+        #             keys.append(r[i])
+        #         count += 1
+        #     elif count == 1:
+        #         for i in range(0, len(r)):
+        #             d[keys[i]] = r[i]
+        #         count += 1
+        #     else:
+        #         l = []
+        #         l.append(str(w) for w in ep)
+        #         for i in range(0, len(keys)):
+        #             d[keys[i]].append = l[i]
+        # print (d)
+        self.output.GenerateGraph(d)
     def validate(self):
         self.validated = True
         self.saveTypesDict = util.TKDictToDict(self.saveTypesTKDict)

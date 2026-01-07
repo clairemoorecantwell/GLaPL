@@ -54,29 +54,49 @@ class Output:
         weightsFilterFrame.pack(side='top', fill='both', expand=True)
         weightsGraphFrame.pack(side='bottom', fill='both', expand=True)
         
+        self.weightsFilterFrame = weightsFilterFrame
+        self.weightsGraphFrame = weightsGraphFrame
         self.weightsContentFrame = weightsContentFrame
         self.weightsCanvas = weightsCanvas
         self.weightsGraphFrame = weightsGraphFrame
 
+        # output = dict()
+        # keys = []
+        # with open('sample_output_file_weights.txt', 'r') as datafile:
+        #     plotting = csv.reader(datafile, delimiter='\t')
+        #     count = 0;
+        #     for row in plotting:
+        #         for i in range(len(row)):
+        #             if count == 0:
+        #                 output[row[i]] = [0]
+        #                 keys.append(row[i])
+        #             elif count == 1:
+        #                 output[keys[i]] = [float(row[i])]
+        #             else:
+        #                 output[keys[i]].append(float(row[i]))
+        #         count +=1;
+        # self.output = output
+        # self.GenerateGraph(self.output)
+    
+    def GenerateGraph(self, d):
+        self.weightsFilter = self.GraphFilters(self.weightsFilterFrame, d)
+        self.weightAxes = self.MakeGraph(self.weightsGraphFrame, d, self.weightsFilter)
+    
+    def ConvertToDict(self, l):
         output = dict()
         keys = []
-        with open('sample_output_file_weights.txt', 'r') as datafile:
-            plotting = csv.reader(datafile, delimiter='\t')
-            count = 0;
-            for row in plotting:
-                for i in range(len(row)):
-                    if count == 0:
-                        output[row[i]] = [0]
-                        keys.append(row[i])
-                    elif count == 1:
-                        output[keys[i]] = [float(row[i])]
-                    else:
-                        output[keys[i]].append(float(row[i]))
-                count +=1;
-        self.output = output
-        self.weightsFilter = self.GraphFilters(weightsFilterFrame, self.output)
-        self.weightAxes = self.MakeGraph(weightsGraphFrame, self.output, self.weightsFilter)
-    
+        count = 0
+        for i in range(len(l)):
+            if count == 0:
+                output[l[i]] = [0]
+                keys.append(l[i])
+            elif count == 1:
+                output[keys[i]] = [float(l[i])]
+            else:
+                output[keys[i]].append(float(l[i]))
+            count +=1;
+        return output
+
     def GraphFilters(self, frame, d):
         label = tk.Label(frame, text='Filter Weights')
         label.grid(column = 0, row = 0, sticky = 'NW')

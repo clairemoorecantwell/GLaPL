@@ -77,13 +77,15 @@ content.grid(column=0, row=0, sticky='NSEW')
 console = Console(root=root, frame=consoleFrame)
 console.ConsoleFrame()
 
-settings = Settings(root=root, frame=settingsFrame, console=console)
-settings.SettingsFrame()
-
-
 #Output Frame:
 output = Output(root=root, frame=outputFrame)
 output.OutputFrame()
+
+settings = Settings(root=root, frame=settingsFrame, console=console, output = output)
+settings.SettingsFrame()
+
+
+
 
 
 
