@@ -13,6 +13,7 @@ from colorama import Fore, Back, Style
 import importlib
 import datetime
 import os
+import copy
 
 class Features:
     def __init__(self, filename, skipChar='x'):
@@ -754,7 +755,6 @@ class Tableau:
 
         return error, obsCandidate, predCandidate
 
-#sampleGrammar =
 
 class Grammar:
     def __init__(self):
@@ -811,14 +811,17 @@ class Grammar:
     def checkParams(self):
 
         warnings = []
+        errors = []
 
         # Checks for files and modules
         if self.trainingData == None:
-            return "ERROR: No training data"
+            errors.append("ERROR: No training data")
 
         if self.outfolder == None:
-            return "ERROR: Output folder not set"
+            errors.append("ERROR: Output folder not set")
 
+        # If adding violations or generating candidates, there must be
+        # a constraints module
         if self.addViolations or self.generateCandidates:
             if self.constraintsModule == None:
                 self.addViolations = False
@@ -828,10 +831,9 @@ class Grammar:
         # TODO this does not actually check for operations, need to when we're ready to generate candidates.
         if self.generateCandidates:
             if self.constraints != "None":
-                self.operations = constraints.operations
+                self.operations = self.constraints.operations
             else:
                 warnings.append("WARNING: you have specified generateCandidates as 'True' but no operations could be read off the constraints module.\n Ensure that your constraints module " + self.constraints +" exists, and contains an object called 'operations'.\n No operations are in effect.")
-
 
         if self.addViolations: # get all constraint names from constraints module
             self.trainingData.constraintNames+= [c.name for c in self.constraints]
@@ -853,15 +855,16 @@ class Grammar:
 
             toRemove = sorted(toRemove, reverse=True)
             # check whether to also remove constraint weights
-            if len(self.w) == len(self.trainingData.constraintNames):
-                cDrop = True
-            for i in toRemove:
-                self.trainingData.constraintNames.pop(i)
-                if cDrop:
-                    self.w.pop(i)
-                for tableau in self.trainingData.tableaux:
-                    for candidate in tableau.candidates:
-                        candidate.violations.pop(i)
+            if hasattr(self, "w"):
+                if len(self.w) == len(self.trainingData.constraintNames):
+                    cDrop = True
+                for i in toRemove:
+                    self.trainingData.constraintNames.pop(i)
+                    if cDrop:
+                        self.w.pop(i)
+                    for tableau in self.trainingData.tableaux:
+                        for candidate in tableau.candidates:
+                            candidate.violations.pop(i)
         
         self.initializeWeights()
 
@@ -870,6 +873,8 @@ class Grammar:
 
         if self.lexC_type:
             self.prepForLexC()
+        
+        return warnings, errors
 
 
     def setParam(self,parameter, value):
@@ -978,7 +983,6 @@ class Grammar:
             try:
                 self.featureSet = Features(value)
                 self.featuresFileName = value
-                return value
             except:
                 self.featureSet = None
                 return "ERROR: Your feature set file, " + value + " did not work. No features read in."
@@ -996,7 +1000,6 @@ class Grammar:
                 constraints = importlib.import_module(value)
                 self.constraintsModule = value
                 self.constraints = constraints.constraints
-                return value
             except:
                 return "ERROR: Your constraints module file, " + value + " did not work. No constraints or operations read in."
 
@@ -1128,8 +1131,6 @@ class Grammar:
             try:
                 self.lexCStartW = float(value)
             except:
-                # Mike: setting lexCStartW to 5.0 per the error message
-                self.lexCStartW = 5.0
                 return "WARNING: lexCStartW could not be converted to float.  Using default value of 5.0"
                 
         # string - radioButton
@@ -1210,10 +1211,7 @@ class Grammar:
                     if len(param) != 2:
                         print(Fore.RED + "\nERROR: Row " + str(row) + " of " + config + " has the wrong number of entries.  It should have the form parameterName: parameterValue"+ Style.RESET_ALL)
                         exit()
-
-                    #if param[1][1]=="["
-                    #convert from text
-
+                        
                     self.setParam(param[0],param[1])
                     self.checkParams()
 
@@ -1362,7 +1360,8 @@ class Grammar:
                 if self.featureSet and len(lex.PFCs) > len(self.featureSet.featureNames) * len(lex.segLabels) * 4:
                     print("WARNING: too many PFCs")
                     break
-
+            
+            # 
             # Note that we've encountered these two lexemes
             for lex in lexemes:
                 lex.lastSeen = self.t
@@ -1520,13 +1519,11 @@ class Grammar:
 
         error_rate = errors / niter
 
-        # print out list of weights (to file)
-        # print out SSE
-        # print out likelihood
-        #
         return error_rate
 
     def learn(self, nIterations, nEpochs, nRuns = 1):
+        
+        self.initState = copy.deepcopy(self)
         runSummaryFilename = self.outfolder+'/'+"runSummary_"+self.label+".txt"
         outFilename = self.outfolder+'/'+"tableaux_"+self.label+"_"
         weightsFilename = self.outfolder+'/'+"weights_"+self.label+"_"
@@ -1538,98 +1535,101 @@ class Grammar:
         self.listingFilename = self.outfolder+'/'+"listing_"+self.label+"_"
 
 
-        self.lexicon = self.trainingData.lexicon.copy()
-        #with open(runSummaryFilename,"w") as f:
-        #    f.write('\t'.join(self.trainingData.constraintNames+["SSE","logLikelihood","errorRate"]))
 
-        for n in range(0,nRuns):
+#        with open(runSummaryFilename,"w") as f:
+#            f.write('\t'.join(self.trainingData.constraintNames+["SSE","logLikelihood","errorRate"]))
 
-            self.readFromConfig(self.config,self.inputFile)
+#        for n in range(0,nRuns):
 
-            if self.p_useListed >0:
-                self.listingFilenamen = self.listingFilename+str(n)+'.txt'
-                with open(self.listingFilename+str(n)+'.txt',"w") as f:
-                    f.write("lexemes \t segments \t listed_at_timestep")
+#           self.readFromConfig(self.config,self.inputFile)
 
-            grammar_constraints_w = []
-            PFCs_w = []
-            PFC_list = []  # stores every PFC that is ever induced
+            #setting up listing output file
+        if self.p_useListed >0:
+            self.listingFilenamen = self.listingFilename+str(n)+'.txt'
+            with open(self.listingFilename+str(n)+'.txt',"w") as f:
+                f.write("lexemes \t segments \t listed_at_timestep")
 
-            self.playlist = self.createLearningPlaylist(nIterations * nEpochs)
+        grammar_constraints_w = []
+        PFCs_w = []
+        PFC_list = []  # stores every PFC that is ever induced
 
-            # setup for changing the learning rate throughout learning
-            startLearningRate = float(self.learningRate[0])
-            endLearningRate = float(self.learningRate[1])
-            learningRateDecrement = (startLearningRate - endLearningRate)/nEpochs
-            currentLearningRate = startLearningRate
+        self.playlist = self.createLearningPlaylist(nIterations * nEpochs)
 
-            # tracking error rates each epoch
-            last10PerErr = 0
-            last10PerCount = 0
-            rates = []
-
-            # tracking lexCs weights per epoch
-            lexCsOverTime = []
-
-            indexesOverTime = []
-            for c in self.w:
-                thisDict = {}
-                for lexkey in self.trainingData.lexicon.keys():
-                    thisDict[lexkey] = [(0,0)]  # each entry will be weight, index
-                indexesOverTime+=[thisDict]
-
-            for i in range(0, nEpochs):
-
-                rate = self.epoch(self.playlist, nIterations, currentLearningRate, start=nIterations * i)
-                print(Fore.CYAN + "Epoch " + str(i+1) +": " + str(rate*100) + " % errors"+ Style.RESET_ALL)
-                rates.append(rate)
-                if i>= (nEpochs-(nEpochs/10)):
-                    last10PerErr += rate
-                    last10PerCount += 1
-                elif nEpochs <= 10:
-                    last10PerCount = 1
-                    last10PerErr = rate
-
-                if self.lexC_type:
-                    lexCsOverTime.append(self.lexCs[:])
-
-                    for ci in range(0,len(indexesOverTime)): # go through constraints
-                        wlist = self.lexCs[ci] # list of weights
-                        for lexkey in self.trainingData.lexicon.keys():
-                            windex = self.trainingData.lexicon[lexkey].lexCindexes[ci] # the index
-                            indexesOverTime[ci][lexkey].append((wlist[windex],windex))
+        # setup for changing the learning rate throughout learning
+        startLearningRate = float(self.learningRate[0])
+        endLearningRate = float(self.learningRate[1])
+        learningRateDecrement = (startLearningRate - endLearningRate)/nEpochs
+        currentLearningRate = startLearningRate
 
 
-                grammar_constraints_w.append(self.w)
-                currentPFC_w = [0 for i in PFCs_w[-1]] if len(PFC_list) > 0 else []
-                for lexeme in self.trainingData.lexicon.values():
-                    #if type(lexeme) == 'lexeme':
-                    for pfc in lexeme.PFCs:
-                        name = lexeme.tag + "_" + pfc.name
-                        if name not in PFC_list:
-                            PFC_list.append(name)
-                            currentPFC_w.append(0)  # make it the right length to accommodate the new PFCs
-                        currentPFC_w[PFC_list.index(name)] = pfc.w
-                PFCs_w.append(currentPFC_w)
 
-                #learning rate decrement, if there is a schedule
-                currentLearningRate = currentLearningRate - learningRateDecrement
+        # tracking error rates each epoch
+        last10PerErr = 0
+        last10PerCount = 0
+        rates = []
 
-            
-            print(Fore.GREEN + Back.WHITE +"\n Run Number: "+ str(n))
-            print(Fore.BLUE + Back.WHITE +"\n Final constraint weights:")
-            printform= ''.join([('{:^'+str(len(cname)+3)+'s} ') for cname in self.trainingData.constraintNames])
-            print( '\n'+printform.format(*[str(i) for i in self.trainingData.constraintNames]))
-            print(printform.format(*[str(round(i,2)) for i in self.w])+Style.RESET_ALL)
+        # tracking lexCs weights per epoch
+        lexCsOverTime = []
+
+        #TODO: only need to do this if we are learning with indexation
+        indexesOverTime = []
+        for c in self.w:
+            thisDict = {}
+            for lexkey in self.trainingData.lexicon.keys():
+                thisDict[lexkey] = [(0,0)]  # each entry will be weight, index
+            indexesOverTime+=[thisDict]
+
+        for i in range(0, nEpochs):
+
+            rate = self.epoch(self.playlist, nIterations, currentLearningRate, start=nIterations * i)
+            print(Fore.CYAN + "Epoch " + str(i+1) +": " + str(rate*100) + " % errors"+ Style.RESET_ALL)
+            rates.append(rate)
+            if i>= (nEpochs-(nEpochs/10)):
+                last10PerErr += rate
+                last10PerCount += 1
+            elif nEpochs <= 10:
+                last10PerCount = 1
+                last10PerErr = rate
+
+            if self.lexC_type:
+                lexCsOverTime.append(self.lexCs[:])
+
+                for ci in range(0,len(indexesOverTime)): # go through constraints
+                    wlist = self.lexCs[ci] # list of weights
+                    for lexkey in self.trainingData.lexicon.keys():
+                        windex = self.trainingData.lexicon[lexkey].lexCindexes[ci] # the index
+                        indexesOverTime[ci][lexkey].append((wlist[windex],windex))
 
 
-            # Results: create results dictionaries and maybe also print to file
-            self.predict(outFilename+str(n)+".txt")
-            
-            with open(errRatesFilename+str(n)+".txt","w") as f:
-                f.write("errorRate")
-                f.write("\n")
-                f.write("\n".join([str(e) for e in rates]))
+            grammar_constraints_w.append(self.w)
+            currentPFC_w = [0 for i in PFCs_w[-1]] if len(PFC_list) > 0 else []
+            for lexeme in self.trainingData.lexicon.values():
+                #if type(lexeme) == 'lexeme':
+                for pfc in lexeme.PFCs:
+                    name = lexeme.tag + "_" + pfc.name
+                    if name not in PFC_list:
+                        PFC_list.append(name)
+                        currentPFC_w.append(0)  # make it the right length to accommodate the new PFCs
+                    currentPFC_w[PFC_list.index(name)] = pfc.w
+            PFCs_w.append(currentPFC_w)
+
+            #learning rate decrement, if there is a schedule
+            currentLearningRate = currentLearningRate - learningRateDecrement
+
+        n=1
+        print(Fore.GREEN + Back.WHITE +"\n Run Number: "+ str(n))
+        print(Fore.BLUE + Back.WHITE +"\n Final constraint weights:")
+        printform= ''.join([('{:^'+str(len(cname)+3)+'s} ') for cname in self.trainingData.constraintNames])
+        print( '\n'+printform.format(*[str(i) for i in self.trainingData.constraintNames]))
+        print(printform.format(*[str(round(i,2)) for i in self.w])+Style.RESET_ALL)
+
+
+        self.predict(outFilename+str(n)+".txt")
+        
+        with open(errRatesFilename+str(n)+".txt","w") as f:
+            f.write("errorRate")
+            f.write("\n")
+            f.write("\n".join([str(e) for e in rates]))
 
             if self.lexC_type:
                 with open(lexCweightsFilename+str(n)+".txt","w") as f:
@@ -1696,16 +1696,6 @@ class Grammar:
                         f.write("\t".join([str(i) for i in theRow]))
 
 
-            self.weightsHistory = {}
-            #1. transpose grammar_constraints_w
-            newWeightsHistory = []*len(grammar_constraints_w[0])
-            for t in grammar_constraints_w:
-                for i in range(0,len(grammar_constraints_w[0])):
-                    newWeightsHistory[i].append(t[i])
-            for i in range(0,self.trainingData.constraintNames):
-                c = self.trainingData.constraintNames[i]
-                self.weightsHistory[c]=newWeightsHistory[i]
-
             with open(weightsFilename+str(n)+".txt", "w") as f:
                 #print(grammar_constraints_w)
                 out = ""
@@ -1768,7 +1758,7 @@ class Grammar:
             f.write(str(self.PFC_type)+'\t')
             f.write(str(self.PFC_lrate)+'\t')
             f.write(str(self.PFC_startW)+'\t')
-
+            
     def predict(self,outputName="output.txt",newInputName = "newInput.txt"):
         # saving all tableau to output file
         print("predicting")
@@ -1829,7 +1819,6 @@ class Grammar:
                     line = [inpt,lexeme,candidate,obsProb,tabProb]+violations
                     f.write('\n')
                     f.write('\t'.join([str(l) for l in line]))
-
 
     def makeTableau(self,datum,rich=False,testFcs=False):
         '''Make the tableau for learning '''
@@ -2459,7 +2448,6 @@ class Grammar:
                 if random.random()<self.pChangeIndexation and update > 0: #only induce if the constraint needs to move *up*
                     induce(self,obs,pred,lexemes,con,weights,update,lexCsInTableau)
 
-
     def predictAll(self):
         globalNoise = self.noisy
         self.noisy=False
@@ -2707,7 +2695,7 @@ class PFC:  # Contains function(s) for calculating a PFC's violations
 
 class trainingData:
     '''essentially, a list of lexeme sets paired with correct surface forms, and frequencies '''
-
+    ''' TODO ensure that trainingData remains static throughout learning'''
     def __init__(self, filename=None):
         self.lexicon = {}  # dictionary of {tag: lexeme}
         self.learnData = []  # each entry is a list: [lexemes,surface,input].  lexemes is itself a list, of all lexemes involved in the entry
@@ -2727,9 +2715,9 @@ class trainingData:
         specialLex = False
 
         try:
-            f = open(self.filename, "r")
+            f = open(filename, "r")
         except:
-            return "ERROR: unable to read input file " + self.filename
+            return "ERROR: unable to read input file " + filename
         lines = f.readlines()
         header = lines[0].split('\t')
         header = [label.strip() for label in header]
@@ -2899,7 +2887,7 @@ class trainingData:
             out += segform.format(*i)
 
         return out
-
+    
     def printLexicon(self):
         print(str(len(self.lexicon))+ " lexemes:")
         for l in self.lexicon:
@@ -3055,9 +3043,10 @@ def distSegs(s1, s2):  # distance = n features that are different
     return dist, s1_not_s2, s2_not_s1
 
 #sampleGrammar = Grammar()
-#tr = trainingData()
-#
 #sampleGrammar.trainingData = trainingData()
+
+
+
 
 def exampleCand2():
     seg1 = [(0, "back"), (1, "high"), (1, "front"), (0, "low")]  # i
