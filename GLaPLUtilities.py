@@ -109,6 +109,12 @@ def SendDictionary(param, dictionary):
         newDict[key] = dictionary[key].get()
     g.setParam(param, newDict)
 
+def TKDictToDict(TKDictionary):
+    newDict = {}
+    for key in TKDictionary:
+        newDict[key] = TKDictionary[key].get()
+    return newDict
+
 def GetFile(value):
     filename = filedialog.askopenfilename()
     value.set(filename)

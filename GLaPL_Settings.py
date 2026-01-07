@@ -583,7 +583,7 @@ class Settings:
         startRow = saveRow
         gridColumn = 0
         maxRows = 2
-        self.saveTypesDict = {'Weights': tk.BooleanVar(value=g.save_weights), 
+        self.saveTypesTKDict = {'Weights': tk.BooleanVar(value=g.save_weights), 
                          'Error rates': tk.BooleanVar(value=g.save_errRates), 
                          'Tableaux': tk.BooleanVar(value=g.save_tableaux),
                          'Indexation final state': tk.BooleanVar(value=g.save_finalIndexation), 
@@ -593,8 +593,8 @@ class Settings:
                          'Phonological Form constraints': tk.BooleanVar(value=g.save_PFCs),
                          'Learned Lexicon': tk.BooleanVar(value=g.save_actualLexicon)
                          }
-        for option, value in self.saveTypesDict.items():
-            check_button = tk.Checkbutton(self.saveSettingsFrame, text=option, variable=value, command=lambda *args: util.SendDictionary('filesToSave',self.saveTypesDict))
+        for option, value in self.saveTypesTKDict.items():
+            check_button = tk.Checkbutton(self.saveSettingsFrame, text=option, variable=value, command=lambda *args: util.SendDictionary('filesToSave',self.saveTypesTKDict))
             check_button.grid(column=gridColumn, row=saveRow, sticky=sticky)
             saveRow += 1
             if saveRow - startRow > maxRows:
@@ -617,17 +617,19 @@ class Settings:
         self.learnButton.grid(column=2, row=gridRow, padx=12, pady=12, sticky=sticky)
 
     def runLearner(self, iterations, epochs):
-        if self.validated:
-            g.learn(iterations / epochs, epochs)
-        else:
-            msg = tk.messagebox.askyesno(title='Requires Valid Configuration', 
-                                          message='A valid configuration is required, \nValidate the configuration and run the learner?')
-            if msg == True:
-                self.validate()
-                if self.validated:
-                    self.runLearner(iterations, epochs)
+        g.learn(iterations / epochs, epochs)
+        # if self.validated:
+        #     g.learn(iterations / epochs, epochs)
+        # else:
+        #     msg = tk.messagebox.askyesno(title='Requires Valid Configuration', 
+        #                                   message='A valid configuration is required, \nValidate the configuration and run the learner?')
+        #     if msg == True:
+        #         self.validate()
+        #         if self.validated:
+        #             self.runLearner(iterations, epochs)
     def validate(self):
         self.validated = True
+        self.saveTypesDict = util.TKDictToDict(self.saveTypesTKDict)
         d = {'trainingData': self.inputFile.get(),
                    'outfolder' : self.outputPath.get(),
                    'threshold' : self.thresholdNum.get(),
