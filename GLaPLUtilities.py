@@ -97,11 +97,14 @@ def SetDirectory(param, m, d):
     x = g.setParam(param, d.get())
     m.set(x)
 
-def ReadTrainingData(param, m, f):
+def ReadTrainingData(param, m, f, process = True):
     filename = filedialog.askopenfilename(initialdir= '.\\')
     f.set(filename)
-    x = g.setParam(param,f.get())
-    m.set(x)
+    if process: 
+        x = g.setParam(param,f.get())
+        m.set(x)
+    else:
+        m.set(filename)
 
 def SendDictionary(param, dictionary):
     newDict = {}

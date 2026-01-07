@@ -915,18 +915,19 @@ class Grammar:
         # GENERAL PARAMETERS
         elif parameter=="learningRate":
             learningRate = value.split(",")
+            learningRate = [float(re.sub(r"[\[\]]","",i)) for i in learningRate]
             
             errmessage = "WARNING: learningRate was not a float, or list of two floats. Using previous value of "+str(self.learningRate)
             try:
                 if len(learningRate)==2:
-                    learningRate = [float(re.sub(r"[\[\]]",i,"")) for i in learningRate]
+                    
                     self.learningRate = learningRate
                 elif len(learningRate)==1:
-                    self.learningRate = [float(learningRate),float(learningRate)]
+                    self.learningRate = [float(learningRate[0]),float(learningRate[0])]
                 else:
                     return errmessage
-            except:
-                return errmessage
+            except Exception as e:
+                return str(e)
 
         # advanced
         elif parameter == "threshold":
@@ -1244,6 +1245,8 @@ class Grammar:
 
         elif decayType == 'L2':
             w = self.L2Decay(weights, decayRate)
+        else:
+            w = self.w
         
         return [i if i > 0 else 0 for i in w]  # lower bound at zero
     
@@ -1553,7 +1556,7 @@ class Grammar:
         PFCs_w = []
         PFC_list = []  # stores every PFC that is ever induced
 
-        self.playlist = self.createLearningPlaylist(nIterations * nEpochs)
+        self.playlist = self.createLearningPlaylist(int(nIterations * nEpochs))
 
         # setup for changing the learning rate throughout learning
         startLearningRate = float(self.learningRate[0])
@@ -1758,7 +1761,9 @@ class Grammar:
             f.write(str(self.PFC_type)+'\t')
             f.write(str(self.PFC_lrate)+'\t')
             f.write(str(self.PFC_startW)+'\t')
-            
+        self.grammar_constraints_w = grammar_constraints_w
+        self.error_rate = rate
+
     def predict(self,outputName="output.txt",newInputName = "newInput.txt"):
         # saving all tableau to output file
         print("predicting")

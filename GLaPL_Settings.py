@@ -551,7 +551,8 @@ class Settings:
         self.inputLabel.grid(column=0, row=gridRow, sticky=sticky)
         self.inputFileMessage = tk.StringVar()
         self.inputFile = tk.StringVar(value=g.trainingData)
-        self.inputButton = tk.Button(folderFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('trainingData', self.inputFileMessage, self.inputFile)) 
+        # self.inputButton = tk.Button(folderFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('trainingData', self.inputFileMessage, self.inputFile)) 
+        self.inputButton = tk.Button(folderFrame, width=15, text='Select File', command=lambda *args : util.ReadTrainingData('trainingData', self.inputFileMessage, self.inputFile, process=False))
         self.inputButton.grid(column=1, row=gridRow, sticky=sticky)
         self.inputMessage = tk.Label(folderFrame, textvariable=self.inputFileMessage, wraplength=wrapLength)
         self.inputMessage.grid(column=2, row=gridRow, sticky=sticky)
@@ -617,7 +618,7 @@ class Settings:
         self.learnButton.grid(column=2, row=gridRow, padx=12, pady=12, sticky=sticky)
 
     def runLearner(self, iterations, epochs):
-        g.learn(iterations / epochs, epochs)
+        g.learn(int(iterations / epochs), int(epochs))
         # if self.validated:
         #     g.learn(iterations / epochs, epochs)
         # else:
@@ -676,3 +677,8 @@ class Settings:
             if m != None:
                 self.validated = False
                 self.console.updateProgress(m)
+        errors, warnings = g.checkParams()
+        for e in errors:
+            self.console.updatHistory(e)
+        for w in warnings:
+            self.console.updateHistory(w)
